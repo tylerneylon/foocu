@@ -12,3 +12,8 @@ To run the current "game", make sure you have Love installed
 and type:
 
     love game
+
+In case you get "command not found," see
+[this love2d.ord page](https://www.love2d.org/wiki/Getting_Started#Mac_OSX)
+for info on running love games from
+the command line.
