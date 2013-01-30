@@ -33,6 +33,11 @@ function love.load()
   for i = 0, 1 do
      tile[i] = love.graphics.newImage( "img/tile"..i..".png" )
   end
+
+  hero = {}
+  for i = 0, 1 do
+    hero[i] = love.graphics.newImage("img/hero" .. i .. ".png")
+  end
   
   love.graphics.setNewFont(12)
   
@@ -47,6 +52,7 @@ function love.load()
   map_display_h = 10
   tile_w = 48
   tile_h = 48
+  clock = 0
 
   print("hi command line")
   for key, value in pairs(_G) do
@@ -56,7 +62,7 @@ end
 
 function love.draw()
   draw_map()
-  love.graphics.print('Hello World!', 400, 300)
+  -- love.graphics.print('Hello World!', 400, 300)
 end
 
 function love.keypressed(key, unicode)
@@ -77,6 +83,8 @@ function love.keypressed(key, unicode)
       map_x = map_x + 1
       --map_x = math.min(map_x+1, map_w-map_display_w)
    end
+
+   clock = clock + 1
 end
 
 function draw_map()
@@ -88,4 +96,11 @@ function draw_map()
             (y*tile_h)+map_offset_y )
       end
    end
+
+   mid_x, mid_y = map_display_w / 2, map_display_h / 2
+   love.graphics.draw(
+       hero[clock % 2],
+       mid_x * tile_w + map_offset_x,
+       mid_y * tile_h + map_offset_y)
+
 end
