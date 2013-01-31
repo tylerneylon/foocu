@@ -39,26 +39,31 @@ function love.load()
   love.graphics.setNewFont(12)
   
   -- map variables
-  map_offset_x = 30
+  map_offset_x = 30  -- In pixels.
   map_offset_y = 30
-  map_display_w = 14
+  map_display_w = 14  -- In sprites.
   map_display_h = 10
-  tile_size = 48
+  tile_size = 48  -- In pixels.
+  -- These are all in sprite coordinates.
   hero_screen_x = map_display_w / 2
   hero_screen_y = map_display_h / 2
   ul_corner_x = 0
   ul_corner_y = 0
+  scroll_frame = 2  -- In sprites. We scroll if the hero tries to move into this frame.
+
+  -- love.graphics.setScissor(map_offset_x, map_offset_y, map_display_w * tile_size, map_display_h * tile_size)
 
   -- moving variables
   hero_speed = 2.5  -- In sprites per second.
   hero_sprite = 0
-  move_clock = 0
-  move_tick = 0.1  -- In seconds, how often a moving hero sprite changes.
+  move_clock = 0  -- A float that counts up in seconds as the hero moves.
+  move_tick = 0.07  -- In seconds, how often a moving hero sprite changes.
 
   print("hi command line")
   for key, value in pairs(_G) do
     print(key, value)
   end
+
 end
 
 function love.draw()
@@ -78,6 +83,7 @@ function love.update(dt)
     if love.keyboard.isDown(key) then
       hero_screen_x = hero_screen_x + dir[1] * dt * hero_speed
       hero_screen_y = hero_screen_y + dir[2] * dt * hero_speed
+      scroll_if_needed()
       did_move = true
     end
   end
@@ -92,18 +98,60 @@ function love.keypressed(key, unicode)
 end
 
 function draw_map()
-  for y = 1, map_display_h do
-    for x = 1, map_display_w do
+  for y = 0, map_display_h do
+    for x = 0, map_display_w do
+      local tile_index = map(math.floor(x + ul_corner_x), math.floor(y + ul_corner_y))
+      local offset_x = math.floor(ul_corner_x) - ul_corner_x
+      local offset_y = math.floor(ul_corner_y) - ul_corner_y
       love.graphics.draw( 
-          tile[map(x + ul_corner_x, y + ul_corner_y)], 
-          (x * tile_size) + map_offset_x, 
-          (y * tile_size) + map_offset_y)
+          tile[tile_index],
+          ((x + offset_x) * tile_size) + map_offset_x, 
+          ((y + offset_y)* tile_size) + map_offset_y)
     end
   end
 
+  -- Draw the hero.
   love.graphics.draw(
       hero[hero_sprite],
       math.floor(hero_screen_x * tile_size) + map_offset_x,
       math.floor(hero_screen_y * tile_size) + map_offset_y)
+
+  -- Draw the border. Eventually I plan for this to have status info.
+  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+  local lr_x, lr_y = map_offset_x + map_display_w * tile_size, map_offset_y + map_display_h * tile_size
+  local r, g, b = love.graphics.getColor()
+  love.graphics.setColor(0, 0, 0)
+  love.graphics.rectangle('fill', 0, 0, map_offset_x, h)
+  love.graphics.rectangle('fill', 0, 0, w, map_offset_y)
+  love.graphics.rectangle('fill', lr_x, 0, w - lr_x, h)
+  love.graphics.rectangle('fill', 0, lr_y, w, h - lr_y)
+  love.graphics.setColor(r, g, b)
 end
 
+function scroll_if_needed()
+  if hero_screen_x < scroll_frame then
+    local extra = scroll_frame - hero_screen_x
+    hero_screen_x = scroll_frame
+    ul_corner_x = ul_corner_x - extra
+  end
+
+  if hero_screen_y < scroll_frame then
+    local extra = scroll_frame - hero_screen_y
+    hero_screen_y = scroll_frame
+    ul_corner_y = ul_corner_y - extra
+  end
+
+  local x_limit = map_display_w - scroll_frame - 1
+  if hero_screen_x > x_limit then
+    local extra = hero_screen_x - x_limit
+    hero_screen_x = x_limit
+    ul_corner_x = ul_corner_x + extra
+  end
+
+  local y_limit = map_display_h - scroll_frame - 1
+  if hero_screen_y > y_limit then
+    local extra = hero_screen_y - y_limit
+    hero_screen_y = y_limit
+    ul_corner_y = ul_corner_y + extra
+  end
+end
