@@ -39,18 +39,6 @@ function love.load()
   love.graphics.setNewFont(12)
   
   -- map variables
-  map_w = 20
-  map_h = 20
-  map_x = 0
-  map_y = 0
-  map_offset_x = 30
-  map_offset_y = 30
-  map_display_w = 14
-  map_display_h = 10
-  tile_w = 48
-  tile_h = 48
-
-  -- new map variables
   map_offset_x = 30
   map_offset_y = 30
   map_display_w = 14
@@ -58,8 +46,6 @@ function love.load()
   tile_size = 48
   hero_screen_x = map_display_w / 2
   hero_screen_y = map_display_h / 2
-  hero_offset_x = 0
-  hero_offset_y = 0
   ul_corner_x = 0
   ul_corner_y = 0
 
@@ -109,15 +95,15 @@ function draw_map()
   for y = 1, map_display_h do
     for x = 1, map_display_w do
       love.graphics.draw( 
-          tile[map(x + map_x, y + map_y)], 
-          (x * tile_w) + map_offset_x, 
-          (y * tile_h) + map_offset_y)
+          tile[map(x + ul_corner_x, y + ul_corner_y)], 
+          (x * tile_size) + map_offset_x, 
+          (y * tile_size) + map_offset_y)
     end
   end
 
   love.graphics.draw(
       hero[hero_sprite],
-      math.floor((hero_screen_x + hero_offset_x) * tile_w) + map_offset_x,
-      math.floor((hero_screen_y + hero_offset_y) * tile_w) + map_offset_y)
+      math.floor(hero_screen_x * tile_size) + map_offset_x,
+      math.floor(hero_screen_y * tile_size) + map_offset_y)
 end
 
