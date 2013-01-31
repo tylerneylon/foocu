@@ -49,7 +49,25 @@ function love.load()
   map_display_h = 10
   tile_w = 48
   tile_h = 48
-  clock = 0
+
+  -- new map variables
+  map_offset_x = 30
+  map_offset_y = 30
+  map_display_w = 14
+  map_display_h = 10
+  tile_size = 48
+  hero_screen_x = map_display_w / 2
+  hero_screen_y = map_display_h / 2
+  hero_offset_x = 0
+  hero_offset_y = 0
+  ul_corner_x = 0
+  ul_corner_y = 0
+
+  -- moving variables
+  hero_speed = 2.5  -- In sprites per second.
+  hero_sprite = 0
+  move_clock = 0
+  move_tick = 0.1  -- In seconds, how often a moving hero sprite changes.
 
   print("hi command line")
   for key, value in pairs(_G) do
@@ -62,26 +80,29 @@ function love.draw()
   -- love.graphics.print('Hello World!', 400, 300)
 end
 
-function love.keypressed(key, unicode)
-  if key == 'up' then
-    map_y = map_y - 1
-    --if map_y < 0 then map_y = 0; end
-  end
-  if key == 'down' then
-    map_y = map_y + 1
-    --if map_y > map_h-map_display_h then map_y = map_h-map_display_h; end
-  end
-   
-  if key == 'left' then
-    map_x = map_x - 1
-    --map_x = math.max(map_x-1, 0)
-  end
-  if key == 'right' then
-    map_x = map_x + 1
-    --map_x = math.min(map_x+1, map_w-map_display_w)
+function love.update(dt)
+  -- clock = math.floor((love.timer.getMicroTime() - clock_start) / 0.2)
+
+  local did_move = false
+  dir_by_key = {up = {0, -1},
+                down = {0, 1},
+                left = {-1, 0},
+                right = {1, 0}}
+  for key, dir in pairs(dir_by_key) do
+    if love.keyboard.isDown(key) then
+      hero_screen_x = hero_screen_x + dir[1] * dt * hero_speed
+      hero_screen_y = hero_screen_y + dir[2] * dt * hero_speed
+      did_move = true
+    end
   end
 
-  clock = clock + 1
+  if did_move then
+    move_clock = move_clock + dt
+    hero_sprite = math.floor(move_clock / move_tick) % 2
+  end
+end
+
+function love.keypressed(key, unicode)
 end
 
 function draw_map()
@@ -94,10 +115,9 @@ function draw_map()
     end
   end
 
-  mid_x, mid_y = map_display_w / 2, map_display_h / 2
   love.graphics.draw(
-      hero[clock % 2],
-      mid_x * tile_w + map_offset_x,
-      mid_y * tile_h + map_offset_y)
+      hero[hero_sprite],
+      math.floor((hero_screen_x + hero_offset_x) * tile_w) + map_offset_x,
+      math.floor((hero_screen_y + hero_offset_y) * tile_w) + map_offset_y)
 end
 
