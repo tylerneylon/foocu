@@ -28,7 +28,7 @@ function love.load()
   -- our tiles
   tile = {}
   for i = 0, 1 do
-    tile[i] = love.graphics.newImage( "img/tile"..i..".png" )
+    tile[i] = love.graphics.newImage("img/tile" .. i .. ".png")
   end
 
   hero = {}
@@ -64,11 +64,11 @@ end
 
 function love.keypressed(key, unicode)
   if key == 'up' then
-    map_y = map_y-1
+    map_y = map_y - 1
     --if map_y < 0 then map_y = 0; end
   end
   if key == 'down' then
-    map_y = map_y+1
+    map_y = map_y + 1
     --if map_y > map_h-map_display_h then map_y = map_h-map_display_h; end
   end
    
