@@ -17,25 +17,38 @@ seed = 37
 rand_max = 65535
 
 function love.load()
-  print('2^5=' .. 2^5)
+  print('Rendering images...')
+  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+  local image_w = w / 4
+  local image_h = image_w
+  local image_types = {'plain', 'triangles', 'triangles fancy'}
+  images = {}
+  for i, image_type in ipairs(image_types) do
+    local canvas = love.graphics.newCanvas(image_w, image_h)
+    -- local canvas = love.graphics.newCanvas(256, 256)
+    love.graphics.setCanvas(canvas)
+    draw_image_type(image_type, image_w, image_h)
+    love.graphics.setCanvas()
+    table.insert(images, canvas)
+  end
+  love.graphics.setColor(255, 255, 255)
+  print('Done.')
+
+  -- love.graphics.setColor(255, 0, 0)
+  -- love.graphics.point(10, 10)
 end
 
 function love.draw()
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   local image_w = w / 4
   local image_h = image_w
-  print('image_w=' .. image_w)
   local dx = image_w / 6
-  local dy = (h - image_h) / 2
-  local image_types = {'plain', 'triangles', 'triangles fancy'}
+  local y = (h - image_h) / 2
   local x = dx
-  for i, image_type in ipairs(image_types) do
-    draw_image_type(image_type, x, dy, image_w, image_h)
+  for i, image in ipairs(images) do
+    love.graphics.draw(image, x, y)
     x = x + image_w + 2 * dx
   end
-
-  -- love.graphics.setColor(255, 0, 0)
-  -- love.graphics.point(10, 10)
 end
 
 -- Temporary function while testing stuff.
@@ -43,11 +56,11 @@ function set_random_color()
   love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 end
 
-function draw_image_type(image_type, origin_x, origin_y, w, h)
+function draw_image_type(image_type, w, h)
   for x = 0, w - 1 do
     for y = 0, h - 1 do
       set_perlin_color(image_type, x, y)
-      love.graphics.point(origin_x + x, origin_y + y)
+      love.graphics.point(x + 0.5, y + 0.5)
     end
   end
 end
