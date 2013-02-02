@@ -1,26 +1,16 @@
 
---[[ TODO NEXT
-     I see some discontinuities in the plain Perlin implementation.
-     First I'd like to draw the images to a buffer in order to keep the app responsive.
-     Next, I'd like to accept mouse clicks that can print out the (x, y) coordinates
-     that is being clicked. This way I can isolate a particular discontinuity and
-     investigate how that is happening.
-
-     Or I could make some educated guesses.
-  ]]
-
--- TODO Draw the images once so we don't have to recompute so much every frame.
-
 --[[ Better code would take the seed as a function parameter. But I am a crazy-ass
      mofo so I will just use a global. ]]
 seed = 37
 rand_max = 65535
 
+show_debug_out = false
+
 function love.load()
   print('Rendering images...')
-  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  local image_w = w / 4
-  local image_h = image_w
+  w, h = love.graphics.getWidth(), love.graphics.getHeight()
+  image_w = w / 4
+  image_h = image_w
   local image_types = {'plain', 'triangles', 'triangles fancy'}
   images = {}
   for i, image_type in ipairs(image_types) do
@@ -39,16 +29,24 @@ function love.load()
 end
 
 function love.draw()
-  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  local image_w = w / 4
-  local image_h = image_w
-  local dx = image_w / 6
-  local y = (h - image_h) / 2
+  -- dx, dy are the margins around each image
+  dx = image_w / 6
+  dy = (h - image_h) / 2
   local x = dx
+  local y = dy
   for i, image in ipairs(images) do
     love.graphics.draw(image, x, y)
     x = x + image_w + 2 * dx
   end
+end
+
+function love.mousepressed(x, y, button)
+  x = x - dx
+  y = y - dy
+  print('Mouse pressed at coords (' .. x .. ', ' .. y .. ') in image 1.')
+  show_debug_out = true
+  print('Base Perlin value here is ' .. base_plain_perlin_value(x, y, 6) .. '.')
+  show_debug_out = false
 end
 
 -- Temporary function while testing stuff.
@@ -79,9 +77,7 @@ end
 
 function set_plain_perlin_color(x, y)
   local result = 0
-  -- TODO This should be 0, 6, but I see clear discontinuities with just i = 6, 6. Need to debug that first.
-  -- for i = 0, 6 do
-  for i = 6, 6 do
+  for i = 0, 6 do
     result = result + base_plain_perlin_value(x, y, i)
   end
   -- result is now in the range [-127, 127].
@@ -95,11 +91,12 @@ end
 function base_plain_perlin_value(x, y, i)
   local corners, weights = find_square_corners(x, y, i)
   local result = 0
-  for i = 1, 4 do
-    local x = rand_from_3d_pt(corners[i][1], corners[i][2], i)
+  for j = 1, 4 do
+    local x = rand_from_3d_pt(corners[j][1], corners[j][2], i)
     x = x / rand_max * 2 - 1  -- x is now in the range [-1, 1].
     x = x * (2^i)
-    result = result + x * weights[i]
+    if show_debug_out then print('for corner ' .. stringify(corners[j]) .. ', x=' .. x) end
+    result = result + x * weights[j]
   end
   return result
 end
@@ -115,6 +112,7 @@ end
 -- and the corners form a square of side length 2^i containing (x, y).
 function find_square_corners(x, y, i)
   -- debug_out('find_square_corners(' .. x .. ', ' .. y .. ', ' .. i .. ')')
+  if show_debug_out then print('find_square_corners(' .. x .. ', ' .. y .. ', ' .. i .. ')') end
   local p = 2 ^ i
   x = x / p
   y = y / p
@@ -124,13 +122,15 @@ function find_square_corners(x, y, i)
   for dx = 0, 1 do
     for dy = 0, 1 do
       table.insert(corners, {cx + dx * p, cy + dy * p})
-      local wx = 1.0 - math.abs(x + dx - math.floor(x))
-      local wy = 1.0 - math.abs(y + dy - math.floor(y))
+      local wx = 1.0 - math.abs(math.floor(x) + dx - x)
+      local wy = 1.0 - math.abs(math.floor(y) + dy - y)
       table.insert(weights, wx * wy)
     end
   end
   -- debug_out('corners=' .. stringify(corners))
   -- debug_out('weights=' .. stringify(weights))
+  if show_debug_out then print('corners=' .. stringify(corners)) end
+  if show_debug_out then print('weights=' .. stringify(weights)) end
   return corners, weights
 end
 
@@ -163,13 +163,16 @@ end
 
 function rand_next(i)
   -- I just made this up. I have no idea if it's any good.
-  return ((i + seed) * 23947 + 28348) % rand_max
+  return ((i + seed) * 523947 + 28348) % rand_max
 end
 
 function rand_from_3d_pt(x, y, z)
-  w = pair_to_pos_int(x, y)
-  n = pair_to_pos_int(w, z)
-  return rand_next(rand_next(n))
+  if show_debug_out then print('rand_from_3d_pt(' .. x .. ', ' .. y .. ', ' .. z .. ')') end
+  local w = pair_to_pos_int(x, y)
+  local n = pair_to_pos_int(w, z)
+  local result = rand_next(rand_next(n))
+  if show_debug_out then print('result=' .. result) end
+  return result
 end
 
 -- This doesn't handle strings yet (ironically).
