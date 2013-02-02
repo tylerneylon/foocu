@@ -65,3 +65,15 @@ the results.
 
 I could also implement idea 2 with and without the random translations
 and rotations to see how those affect the final output.
+
+#### Code design
+
+I changed my mind about generating each image twice. I'll generate all
+of them once using per-point calculations.
+
+I'll make three images:
+
+* Idea 1 = basic Perlin.
+* Idea 2 less fancy = Perlin on triangles
+* Idea 3 more fancy = Perlin on triangles with trans and rotation
+
