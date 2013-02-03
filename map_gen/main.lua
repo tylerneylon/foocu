@@ -55,9 +55,15 @@ end
 function love.mousepressed(x, y, button)
   x = x - dx
   y = y - dy
-  print('Mouse pressed at coords (' .. x .. ', ' .. y .. ') in image 1.')
   show_debug_out = true
-  print('Base Perlin value here is ' .. base_plain_perlin_value(x, y, 6) .. '.')
+  if x < image_w then
+    print('Mouse pressed at coords (' .. x .. ', ' .. y .. ') in image 1.')
+    print('Base Perlin value here is ' .. base_plain_perlin_value(x, y, 6) .. '.')
+  else  -- For now, assume it's in image 2 then.
+    x = x - image_w - 2 * dx
+    print('Mouse pressed at coords (' .. x .. ', ' .. y .. ') in image 2.')
+    print('Base Perlin value here is ' .. base_tri_perlin_value(x, y, 6) .. '.')
+  end
   show_debug_out = false
 end
 
@@ -115,7 +121,7 @@ function base_plain_perlin_value(x, y, i)
   return result
 end
 
-t = 5
+t = 100
 function debug_out(s)
   if t <= 0 then return end
   print(s)
@@ -151,8 +157,65 @@ end
 -- Triangle Perlin functions.
 
 function set_tri_perlin_color(x, y, base_only)
-  -- Not yet done.
-  set_random_color()
+  local result = 0
+  local min_i = 0
+  if base_only then min_i = 6 end
+  for i = min_i, 6 do
+    result = result + base_tri_perlin_value(x, y, i)
+  end
+  -- result is now in the range [-127, 127].
+  result = result + 127
+  if result < 0 or result > 255 then
+    debug_out('ERROR: In set_plain_perlin_color, ended up with result=' .. result)
+  end
+  love.graphics.setColor(result, result, result)
+end
+
+function base_tri_perlin_value(x, y, i)
+  local corners, weights = find_tri_corners(x, y, i)
+  local result = 0
+  for j = 1, 3 do
+    local x = rand_from_3d_pt(corners[j][1], corners[j][2], i)
+    x = x / rand_max * 2 - 1  -- x is now in the range [-1, 1].
+    x = x * (2^i)
+    if show_debug_out then print('for corner ' .. stringify(corners[j]) .. ', x=' .. x) end
+    result = result + x * weights[j]
+  end
+  return result
+end
+
+-- Returns corners, weights such that (x, y) = sum of w * c for c, w in corners, weights;
+-- and the corners form a square of side length 2^i containing (x, y).
+function find_tri_corners(x, y, i)
+  -- debug_out('find_tri_corners(' .. x .. ', ' .. y .. ', ' .. i .. ')')
+  if show_debug_out then print('find_tri_corners(' .. x .. ', ' .. y .. ', ' .. i .. ')') end
+  local p = 2 ^ i
+  x = x / p
+  y = y / p
+  local cx, cy = math.floor(x) * p, math.floor(y) * p
+  local dir_by_order = {[false] = {1, 0}, [true] = {0, 1}}
+  local fx, fy = x - math.floor(x), y - math.floor(y)
+  local min_xy, max_xy = math.min(fx, fy), math.max(fx, fy)
+
+  local corners = {}
+  local weights = {}
+
+  table.insert(corners, {cx, cy})
+  table.insert(weights, 1.0 - max_xy)
+
+  local dir = dir_by_order[fx < fy]
+  if show_debug_out then print('dir=' .. stringify(dir)) end
+  table.insert(corners, {cx + dir[1] * p, cy + dir[2] * p})
+  table.insert(weights, max_xy - min_xy)
+
+  table.insert(corners, {cx + p, cy + p})
+  table.insert(weights, min_xy)
+
+  -- debug_out('corners=' .. stringify(corners))
+  -- debug_out('weights=' .. stringify(weights))
+  if show_debug_out then print('corners=' .. stringify(corners)) end
+  if show_debug_out then print('weights=' .. stringify(weights)) end
+  return corners, weights
 end
 
 function set_fancy_tri_perlin_color(x, y, base_only)
@@ -203,4 +266,8 @@ function stringify(t)
     return tostring(t)
   end
   return 'unknown type'
+end
+
+function fif(condition, if_true, if_false)
+  if condition then return if_true else return if_false end
 end
