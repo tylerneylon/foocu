@@ -3,6 +3,7 @@
      mofo so I will just use a global. ]]
 seed = 47
 rand_max = 65535
+max_scale = 6
 
 show_debug_out = false
 
@@ -61,11 +62,11 @@ function love.mousepressed(x, y, button)
   show_debug_out = true
   if x < image_w then
     print('Mouse pressed at coords (' .. x .. ', ' .. y .. ') in image 1.')
-    print('Base Perlin value here is ' .. base_plain_perlin_value(x, y, 6) .. '.')
+    print('Base Perlin value here is ' .. base_plain_perlin_value(x, y, max_scale) .. '.')
   else  -- For now, assume it's in image 2 then.
     x = x - image_w - 2 * dx
     print('Mouse pressed at coords (' .. x .. ', ' .. y .. ') in image 2.')
-    print('Base Perlin value here is ' .. base_tri_perlin_value(x, y, 6) .. '.')
+    print('Base Perlin value here is ' .. base_tri_perlin_value(x, y, max_scale) .. '.')
   end
   show_debug_out = false
 end
@@ -106,8 +107,8 @@ end
 function set_plain_perlin_color(x, y, base_only)
   local result = 0
   local min_i = 0
-  if base_only then min_i = 6 end
-  for i = min_i, 6 do
+  if base_only then min_i = max_scale end
+  for i = min_i, max_scale do
     result = result + base_plain_perlin_value(x, y, i)
   end
   -- result is now in the range [-127, 127].
@@ -169,8 +170,8 @@ end
 function set_tri_perlin_color(x, y, base_only)
   local result = 0
   local min_i = 0
-  if base_only then min_i = 6 end
-  for i = min_i, 6 do
+  if base_only then min_i = max_scale end
+  for i = min_i, max_scale do
     result = result + base_tri_perlin_value(x, y, i)
   end
   -- result is now in the range [-127, 127].
@@ -196,12 +197,15 @@ end
 
 -- Returns corners, weights such that (x, y) = sum of w * c for c, w in corners, weights;
 -- and the corners form a square of side length 2^i containing (x, y).
-function find_tri_corners(x, y, i)
+function find_tri_corners(x, y, i, do_jiggle)
   -- debug_out('find_tri_corners(' .. x .. ', ' .. y .. ', ' .. i .. ')')
   if show_debug_out then print('find_tri_corners(' .. x .. ', ' .. y .. ', ' .. i .. ')') end
   local p = 2 ^ i
   x = x / p
   y = y / p
+
+  -- Jiggle the point if requested.
+  if do_jiggle then x, y = jiggle_point(x, y, i) end
 
   -- Apply T^{-1} to (x, y). This is from my LSH paper.
   local mu = (1 - 1 / math.sqrt(3)) / 2
@@ -236,8 +240,46 @@ function find_tri_corners(x, y, i)
 end
 
 function set_fancy_tri_perlin_color(x, y, base_only)
-  -- Not yet done.
-  set_random_color()
+  local result = 0
+  local min_i = 0
+  if base_only then min_i = max_scale end
+  for i = min_i, max_scale do
+    result = result + base_fancy_tri_perlin_value(x, y, i)
+  end
+  -- result is now in the range [-127, 127].
+  result = result + 127
+  if result < 0 or result > 255 then
+    debug_out('ERROR: In set_plain_perlin_color, ended up with result=' .. result)
+  end
+  love.graphics.setColor(result, result, result)
+end
+
+function base_fancy_tri_perlin_value(x, y, i)
+  local corners, weights = find_tri_corners(x, y, i, true)
+  local result = 0
+  for j = 1, 3 do
+    local x = rand_from_3d_pt(corners[j][1], corners[j][2], i)
+    x = x / rand_max * 2 - 1  -- x is now in the range [-1, 1].
+    x = x * (2^i)
+    if show_debug_out then print('for corner ' .. stringify(corners[j]) .. ', x=' .. x) end
+    result = result + x * weights[j]
+  end
+  return result
+end
+
+-- Applies a random transformation to (x, y) based on i and the seed.
+function jiggle_point(x, y, i)
+  local r = rand_next(i)  -- r is always an int that we can call rand_iter on.
+  local dx = r / rand_max
+  r = rand_next(r)
+  local dy = r / rand_max
+  r = rand_next(r)
+  local angle = r / rand_max * math.pi * 2
+  local c, s = math.cos(angle), math.sin(angle)
+
+  x = x + dx
+  y = y + dy
+  return c * x - s * y, c * y + s * x
 end
 
 function int_to_nonneg_int(i)
