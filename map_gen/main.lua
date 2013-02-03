@@ -9,17 +9,23 @@ show_debug_out = false
 function love.load()
   print('Rendering images...')
   w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  image_w = w / 4
+  image_w = w / 5
   image_h = image_w
   local image_types = {'plain', 'triangles', 'triangles fancy'}
+  base_images = {}  -- These are the high-amplitude functions included in each final image.
   images = {}
-  for i, image_type in ipairs(image_types) do
-    local canvas = love.graphics.newCanvas(image_w, image_h)
-    -- local canvas = love.graphics.newCanvas(256, 256)
-    love.graphics.setCanvas(canvas)
-    draw_image_type(image_type, image_w, image_h)
-    love.graphics.setCanvas()
-    table.insert(images, canvas)
+  for j = 0, 1 do
+    local image_list = nil
+    if j == 0 then image_list = images else image_list = base_images end
+    local base_only = (j == 1)
+    for i, image_type in ipairs(image_types) do
+      local canvas = love.graphics.newCanvas(image_w, image_h)
+      -- local canvas = love.graphics.newCanvas(256, 256)
+      love.graphics.setCanvas(canvas)
+      draw_image_type(image_type, image_w, image_h, base_only)
+      love.graphics.setCanvas()
+      table.insert(image_list, canvas)
+    end
   end
   love.graphics.setColor(255, 255, 255)
   print('Done.')
@@ -30,10 +36,16 @@ end
 
 function love.draw()
   -- dx, dy are the margins around each image
-  dx = image_w / 6
-  dy = (h - image_h) / 2
+  dx = (w - 3 * image_w) / 6
+  dy = (h - 2 * image_h) / 4
   local x = dx
   local y = dy
+  for i, image in ipairs(base_images) do
+    love.graphics.draw(image, x, y)
+    x = x + image_w + 2 * dx
+  end
+  x = dx
+  y = 3 * dy + image_h
   for i, image in ipairs(images) do
     love.graphics.draw(image, x, y)
     x = x + image_w + 2 * dx
@@ -54,30 +66,32 @@ function set_random_color()
   love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 end
 
-function draw_image_type(image_type, w, h)
+function draw_image_type(image_type, w, h, base_only)
   for x = 0, w - 1 do
     for y = 0, h - 1 do
-      set_perlin_color(image_type, x, y)
+      set_perlin_color(image_type, x, y, base_only)
       love.graphics.point(x + 0.5, y + 0.5)
     end
   end
 end
 
-function set_perlin_color(image_type, x, y)
+function set_perlin_color(image_type, x, y, base_only)
   if image_type == 'plain' then
-    set_plain_perlin_color(x, y)
+    set_plain_perlin_color(x, y, base_only)
   elseif image_type == 'triangles' then
-    set_tri_perlin_color(x, y)
+    set_tri_perlin_color(x, y, base_only)
   elseif image_type == 'triangles fancy' then
-    set_fancy_tri_perlin_color(x, y)
+    set_fancy_tri_perlin_color(x, y, base_only)
   end
 end
 
 -- Plain Perlin functions.
 
-function set_plain_perlin_color(x, y)
+function set_plain_perlin_color(x, y, base_only)
   local result = 0
-  for i = 0, 6 do
+  local min_i = 0
+  if base_only then min_i = 6 end
+  for i = min_i, 6 do
     result = result + base_plain_perlin_value(x, y, i)
   end
   -- result is now in the range [-127, 127].
@@ -136,12 +150,12 @@ end
 
 -- Triangle Perlin functions.
 
-function set_tri_perlin_color(x, y)
+function set_tri_perlin_color(x, y, base_only)
   -- Not yet done.
   set_random_color()
 end
 
-function set_fancy_tri_perlin_color(x, y)
+function set_fancy_tri_perlin_color(x, y, base_only)
   -- Not yet done.
   set_random_color()
 end
