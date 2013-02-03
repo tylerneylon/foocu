@@ -1,16 +1,14 @@
 
 --[[ Better code would take the seed as a function parameter. But I am a crazy-ass
      mofo so I will just use a global. ]]
-seed = 37
+seed = 47
 rand_max = 65535
 
 show_debug_out = false
 
-function love.load()
-  print('Rendering images...')
-  w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  image_w = w / 5
-  image_h = image_w
+function render()
+  print('\nRendering images...')
+  print('Seed=' .. seed)
   local image_types = {'plain', 'triangles', 'triangles fancy'}
   base_images = {}  -- These are the high-amplitude functions included in each final image.
   images = {}
@@ -29,9 +27,14 @@ function love.load()
   end
   love.graphics.setColor(255, 255, 255)
   print('Done.')
+end
 
-  -- love.graphics.setColor(255, 0, 0)
-  -- love.graphics.point(10, 10)
+function love.load()
+  w, h = love.graphics.getWidth(), love.graphics.getHeight()
+  image_w = w / 5
+  image_h = image_w
+
+  render()
 end
 
 function love.draw()
@@ -65,6 +68,13 @@ function love.mousepressed(x, y, button)
     print('Base Perlin value here is ' .. base_tri_perlin_value(x, y, 6) .. '.')
   end
   show_debug_out = false
+end
+
+function love.keypressed(key)
+  if key == 'right' then
+    seed = seed + 1
+    render()
+  end
 end
 
 -- Temporary function while testing stuff.
