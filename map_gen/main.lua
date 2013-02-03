@@ -4,6 +4,7 @@
 seed = 47
 rand_max = 65535
 max_scale = 6
+need_to_draw = false
 
 show_debug_out = false
 
@@ -28,6 +29,7 @@ function render()
   end
   love.graphics.setColor(255, 255, 255)
   print('Done.')
+  need_to_draw = true
 end
 
 function love.load()
@@ -39,6 +41,8 @@ function love.load()
 end
 
 function love.draw()
+  if not need_to_draw then return end
+
   -- dx, dy are the margins around each image
   dx = (w - 3 * image_w) / 6
   dy = (h - 2 * image_h) / 4
@@ -54,6 +58,10 @@ function love.draw()
     love.graphics.draw(image, x, y)
     x = x + image_w + 2 * dx
   end
+
+  -- The need_to_draw idea isn't working for some reason. Probably
+  -- there is something about how Love draws that I don't know yet.
+  -- need_to_draw = false
 end
 
 function love.mousepressed(x, y, button)
