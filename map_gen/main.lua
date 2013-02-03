@@ -192,6 +192,13 @@ function find_tri_corners(x, y, i)
   local p = 2 ^ i
   x = x / p
   y = y / p
+
+  -- Apply T^{-1} to (x, y). This is from my LSH paper.
+  local mu = (1 - 1 / math.sqrt(3)) / 2
+  local s = x + y
+  x = x / math.sqrt(3) + mu * s
+  y = y / math.sqrt(3) + mu * s
+
   local cx, cy = math.floor(x) * p, math.floor(y) * p
   local dir_by_order = {[false] = {1, 0}, [true] = {0, 1}}
   local fx, fy = x - math.floor(x), y - math.floor(y)
