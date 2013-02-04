@@ -1,3 +1,9 @@
+require('map')
+
+--[[ TODO
+     * Move all map functions from here into map.lua.
+  ]]
+
 function int_to_nonneg_int(i)
   if i >= 0 then
     return i * 2
@@ -68,7 +74,6 @@ end
 
 function love.draw()
   draw_map()
-  -- love.graphics.print('Hello World!', 400, 300)
 end
 
 function love.update(dt)
@@ -100,13 +105,17 @@ end
 function draw_map()
   for y = 0, map_display_h do
     for x = 0, map_display_w do
-      local tile_index = map(math.floor(x + ul_corner_x), math.floor(y + ul_corner_y))
+      local map_x, map_y = math.floor(x + ul_corner_x), math.floor(y + ul_corner_y)
+      local tile_index = map(map_x, map_y)
       local offset_x = math.floor(ul_corner_x) - ul_corner_x
       local offset_y = math.floor(ul_corner_y) - ul_corner_y
+      local height = perlin_noise(map_x * 4, map_y * 4)  -- The * 4 is temporary to get steeper slopes so I can see this is working.
+      love.graphics.setColor(height, height, height)
       love.graphics.draw( 
           tile[tile_index],
           ((x + offset_x) * tile_size) + map_offset_x, 
           ((y + offset_y)* tile_size) + map_offset_y)
+      love.graphics.setColor(255, 255, 255)
     end
   end
 
