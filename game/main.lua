@@ -33,8 +33,8 @@ function love.load()
 
   -- our tiles
   tile = {}
-  for i = 0, 1 do
-    tile[i] = love.graphics.newImage("img/tile" .. i .. ".png")
+  for i = 0, 2 do
+    tile[i] = love.graphics.newImage("img/flat_tile" .. i .. ".png")
   end
 
   hero = {}
@@ -48,8 +48,9 @@ function love.load()
   map_offset_x = 30  -- In pixels.
   map_offset_y = 30
   map_display_w = 14  -- In sprites.
-  map_display_h = 10
-  tile_size = 48  -- In pixels.
+  map_display_h = 20
+  tile_w = 48  -- In pixels.
+  tile_h = 24
   -- These are all in sprite coordinates.
   hero_screen_x = map_display_w / 2
   hero_screen_y = map_display_h / 2
@@ -113,8 +114,8 @@ function draw_map()
       love.graphics.setColor(height, height, height)
       love.graphics.draw( 
           tile[tile_index],
-          ((x + offset_x) * tile_size) + map_offset_x, 
-          ((y + offset_y)* tile_size) + map_offset_y)
+          ((x + offset_x) * tile_w) + map_offset_x, 
+          ((y + offset_y)* tile_h) + map_offset_y)
       love.graphics.setColor(255, 255, 255)
     end
   end
@@ -122,12 +123,12 @@ function draw_map()
   -- Draw the hero.
   love.graphics.draw(
       hero[hero_sprite],
-      math.floor(hero_screen_x * tile_size) + map_offset_x,
-      math.floor(hero_screen_y * tile_size) + map_offset_y)
+      math.floor(hero_screen_x * tile_w) + map_offset_x,
+      math.floor(hero_screen_y * tile_h) + map_offset_y)
 
   -- Draw the border. Eventually I plan for this to have status info.
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  local lr_x, lr_y = map_offset_x + map_display_w * tile_size, map_offset_y + map_display_h * tile_size
+  local lr_x, lr_y = map_offset_x + map_display_w * tile_w, map_offset_y + map_display_h * tile_h
   local r, g, b = love.graphics.getColor()
   love.graphics.setColor(0, 0, 0)
   love.graphics.rectangle('fill', 0, 0, map_offset_x, h)
