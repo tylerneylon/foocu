@@ -2,6 +2,7 @@ require('map')
 
 --[[ TODO
      * Move all map functions from here into map.lua.
+     * Separate groups of similar functions into files.
   ]]
 
 function int_to_nonneg_int(i)
@@ -99,6 +100,64 @@ function love.update(dt)
     move_clock = move_clock + dt
     hero_sprite = math.floor(move_clock / move_tick) % 2
   end
+end
+
+function recalc_zbuffer()
+  -- Reset the zbuffer, which we call tile_cols. I could rename either
+  -- this function or the variable so it's more obvious they refer to the same thing.
+  -- tile_cols[col#][row#] = {bkg_tile, fg_tile} or just {bkg_tile}.
+  tile_cols = {}
+
+  local last_hdiff = nil
+  -- base_{x,y} are the screen coordinates before accounting for h_diff. They should be
+  -- integers, and y may be off the visible screen, including negative.
+  function add_point_to_zbuffer(base_x, base_y, tile_index, hdiff)
+    add_tile_to_zbuffer(base_x, base_y - hdiff, tile_index)
+    if last_height ~= nil and hdiff < last_hdiff then
+      -- We need to put some slopes in here.
+      for hd = hdiff + 1, last_hdiff - 1 do
+        add_tile_to_zbuffer(base_x, base_y - hd, 2)
+      end
+    end
+    last_hdiff = hdiff
+  end
+  -- The entire purpose of this function is to throw away out-of-range entries.
+  function add_tile_to_zbuffer(x, y, tile_index)
+    if y < 0 or y > map_display_h then return end
+    tile_cols[x][y] = {tile_index}
+  end
+
+  local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
+  local hero_height = perlin_noise(hx, hy)
+  for x = 0, map_display_w do
+    tile_cols[x] = {}
+    for y = 0, map_display_h do
+      local map_x, map_y = math.floor(x + ul_corner_x), math.floor(y + ul_corner_y)
+      local tile_index = map(map_x, map_y)
+      local height = perlin_noise(map_x, map_y)
+      local hdiff = height - hero_height
+      if y == 0 then
+        -- tile_cols[x][y + hdiff] = tile_index
+        local dy = 0
+        local screen_y = y - hdiff
+        while screen_y > 0 do
+          dy = dy - 1
+          hdiff = perlin_noise(map_x, map_y + dy) - hero_height
+          screen_y = y - hdiff
+        end
+        while dy <= 0 do
+          tile_index = map(map_x, map_y + dy)
+          hdiff = perlin_noise(map_x, map_y + dy) - hero_height
+          add_point_to_zbuffer(x, y + dy, tile_index, hdiff)
+          dy = dy + 1
+        end
+      end
+      -- TODO HERE Up to here, we've handled (untested) opaque map tiles behind the hero.
+      --           Next up I need to account for foreground-aka-maybe-transparent tiles
+      --           that may be in front of the hero but should not block visibility.
+    end
+  end
+  map_display_{h,w}
 end
 
 function love.keypressed(key, unicode)
