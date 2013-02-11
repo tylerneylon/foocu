@@ -108,38 +108,45 @@ function recalc_zbuffer()
   -- tile_cols[col#][row#] = {bkg_tile, fg_tile} or just {bkg_tile}.
   tile_cols = {}
 
+  -- Variables to be used in the functions below.
   local last_hdiff = nil
+  local bkg_fg_index = 1
+
   -- base_{x,y} are the screen coordinates before accounting for h_diff. They should be
   -- integers, and y may be off the visible screen, including negative.
-  function add_point_to_zbuffer(base_x, base_y, tile_index, hdiff)
-    add_tile_to_zbuffer(base_x, base_y - hdiff, tile_index)
+  function add_point_to_zbuffer(base_x, base_y, tile_index, hdiff, top_layer)
+    top_layer = top_layer or false  -- Now top_layer should always be a bool.
+    add_tile_to_zbuffer(base_x, base_y - hdiff, tile_index, top_layer)
     if last_height ~= nil and hdiff < last_hdiff then
-      -- We need to put some slopes in here.
+      -- We may need to put some slopes in here.
       for hd = hdiff + 1, last_hdiff - 1 do
-        add_tile_to_zbuffer(base_x, base_y - hd, 2)
+        add_tile_to_zbuffer(base_x, base_y - hd, 2, top_layer)
       end
     end
     last_hdiff = hdiff
   end
-  -- The entire purpose of this function is to throw away out-of-range entries.
-  function add_tile_to_zbuffer(x, y, tile_index)
+
+  function add_tile_to_zbuffer(x, y, tile_index, top_layer)
     if y < 0 or y > map_display_h then return end
-    tile_cols[x][y] = {tile_index}
+    if tile_cols[x][y] == nil then tile_cols[x][y] = {} end
+    if tile_cols[x][y][1] and top_layer then bkg_fg_index = 2 end
+    tile_cols[x][y][bkg_fg_index] = tile_index
   end
 
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
   local hero_height = perlin_noise(hx, hy)
   for x = 0, map_display_w do
     tile_cols[x] = {}
+    bkg_fg_index = 1
     for y = 0, map_display_h do
       local map_x, map_y = math.floor(x + ul_corner_x), math.floor(y + ul_corner_y)
       local tile_index = map(map_x, map_y)
       local height = perlin_noise(map_x, map_y)
       local hdiff = height - hero_height
+      local screen_y = y - hdiff
       if y == 0 then
         -- tile_cols[x][y + hdiff] = tile_index
         local dy = 0
-        local screen_y = y - hdiff
         while screen_y > 0 do
           dy = dy - 1
           hdiff = perlin_noise(map_x, map_y + dy) - hero_height
@@ -151,10 +158,10 @@ function recalc_zbuffer()
           add_point_to_zbuffer(x, y + dy, tile_index, hdiff)
           dy = dy + 1
         end
+      else
+        local top_layer = (map_y > hy)
+        add_point_to_zbuffer(x, y, tile_index, hdiff, top_layer)
       end
-      -- TODO HERE Up to here, we've handled (untested) opaque map tiles behind the hero.
-      --           Next up I need to account for foreground-aka-maybe-transparent tiles
-      --           that may be in front of the hero but should not block visibility.
     end
   end
   map_display_{h,w}
