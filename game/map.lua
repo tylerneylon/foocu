@@ -11,6 +11,13 @@ max_scale = 6
 
 -- Public functions.
 
+function map_height(x, y)
+  return math.floor(perlin_noise(x, y))
+end
+
+
+-- Private functions.
+
 -- Returns a value in the range [0, 255].
 -- This value is pseudorandom and based on the seed.
 function perlin_noise(x, y)
@@ -25,9 +32,6 @@ function perlin_noise(x, y)
   end
   return result
 end
-
-
--- Private functions.
 
 -- Returns corners, weights such that (x, y) = sum of w * c for c, w in corners,
 -- weights; and the corners form a square of side length 2^i containing (x, y).
