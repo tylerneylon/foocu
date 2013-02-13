@@ -12,7 +12,7 @@ max_scale = 6
 -- Public functions.
 
 function map_height(x, y)
-  return math.floor(perlin_noise(x, y))
+  return math.floor(perlin_noise(x / 4, y / 4))
 end
 
 

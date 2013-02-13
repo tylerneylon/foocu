@@ -104,6 +104,26 @@ function love.update(dt)
   recalc_zbuffer()
 end
 
+--[[ Returns a list of elements from (0, 1, 2, 3) indicating which borders
+     should be drawn for the given tile. The border numbers are set up like so:
+          ---1---
+         |       |
+         0       2
+         |       |
+          ---3---
+     This way, we can look at b%2 and b//2 to concisely know what to draw.
+  ]]
+function get_border(map_x, map_y)
+  local h = map_height(map_x, map_y)
+  local border = {}
+  local dirs = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}}
+  for i, dir in ipairs(dirs) do
+    local other_h = map_height(map_x + dir[1], map_y + dir[2])
+    if other_h ~= h then table.insert(border, i - 1) end
+  end
+  return border
+end
+
 function recalc_zbuffer()
   -- print('recalc_zbuffer()')
 
@@ -111,10 +131,12 @@ function recalc_zbuffer()
   -- this function or the variable so it's more obvious they refer to the same thing.
   -- tile_cols[col#][row#] = {bkg_tile, fg_tile} or just {bkg_tile}.
   tile_cols = {}
+  borders = {}
 
   -- Variables to be used in the functions below.
   local last_hdiff = nil
   local bkg_fg_index = 1
+  local this_border = nil
 
   -- base_{x,y} are the screen coordinates before accounting for h_diff. They should be
   -- integers, and y may be off the visible screen, including negative.
@@ -136,8 +158,13 @@ function recalc_zbuffer()
     -- print('add_tile_to_zbuffer(' .. x .. ', ' .. y .. ', ..)')
     if y < 0 or y > map_display_h then return end
     if tile_cols[x][y] == nil then tile_cols[x][y] = {} end
+    if borders[x][y] == nil then borders[x][y] = {} end
     if tile_cols[x][y][1] and top_layer then bkg_fg_index = 2 end
     tile_cols[x][y][bkg_fg_index] = tile_index
+    -- print('borders=' .. stringify(borders))
+    -- print('borders[x]=' .. stringify(borders[x]))
+    -- print('borders[x][y]=' .. stringify(borders[x][y]))
+    borders[x][y][bkg_fg_index] = this_border
   end
 
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
@@ -146,6 +173,7 @@ function recalc_zbuffer()
   for x = 0, map_display_w do
     -- print('x=' .. x)
     tile_cols[x] = {}
+    borders[x] = {}
     bkg_fg_index = 1
     local y = 0
     while y <= map_display_h or tile_cols[x][map_display_h] == nil do
@@ -156,6 +184,7 @@ function recalc_zbuffer()
       local height = map_height(map_x, map_y)
       -- print('height=' .. height)
       local hdiff = height - hero_height
+      this_border = get_border(map_x, map_y)
       -- print('hdiff=' .. hdiff)
       local screen_y = y - hdiff
       if y == 0 then
@@ -170,6 +199,7 @@ function recalc_zbuffer()
           -- print('dy=' .. dy)
           tile_index = map(map_x, map_y + dy)
           hdiff = map_height(map_x, map_y + dy) - hero_height
+          this_border = get_border(map_x, map_y + dy)
           add_point_to_zbuffer(x, y + dy, tile_index, hdiff)
           dy = dy + 1
         end
@@ -192,6 +222,62 @@ function draw_sprite(sprite, x, y)
 end
 
 function draw_map()
+  for y = 0, map_display_h do
+    for x = 0, map_display_w do
+      local layers = tile_cols[x][y]
+      local tile_index = layers[1]
+      if tile_index == nil then tile_index = layers[2] end
+      if tile_index == nil then
+        print('Error: both layers are nil at x=' .. x .. ' y=' .. y)
+      end
+
+      local offset_x = math.floor(ul_corner_x) - ul_corner_x
+      local offset_y = math.floor(ul_corner_y) - ul_corner_y
+      draw_sprite(tile[tile_index], x + offset_x, y + offset_y)
+
+      if layers[1] and layers[2] then
+        love.graphics.setColor(255, 255, 255, 100)
+        draw_sprite(tile[layers[2]], x + offset_x, y + offset_y)
+        love.graphics.setColor(255, 255, 255, 255)
+      end
+    end
+  end
+
+  -- Draw the hero.
+  local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
+  local bx, by = math.floor(hero_map_x), math.floor(hero_map_y + 0.3)
+  love.graphics.setColor(0, 0, 255)
+  love.graphics.rectangle(
+      'line',
+      (bx - ul_corner_x) * tile_w + map_offset_x,
+      (by - ul_corner_y) * tile_h + map_offset_y,
+      tile_w * 2,
+      tile_h * 2)
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.rectangle(
+      'line',
+      (hx - ul_corner_x) * tile_w + map_offset_x,
+      (hy - ul_corner_y) * tile_h + map_offset_y,
+      tile_w,
+      tile_h)
+  -- The - 1 is to account for the double-height of the hero sprite. We want to draw
+  -- his feet on the square were we count him as.
+  draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, hero_map_y - ul_corner_y - 1)
+
+
+  -- Draw the border. Eventually I plan for this to have status info.
+  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+  local lr_x, lr_y = map_offset_x + map_display_w * tile_w, map_offset_y + map_display_h * tile_h
+  local r, g, b = love.graphics.getColor()
+  love.graphics.setColor(0, 0, 0)
+  love.graphics.rectangle('fill', 0, 0, map_offset_x, h)
+  love.graphics.rectangle('fill', 0, 0, w, map_offset_y)
+  love.graphics.rectangle('fill', lr_x, 0, w - lr_x, h)
+  love.graphics.rectangle('fill', 0, lr_y, w, h - lr_y)
+  love.graphics.setColor(r, g, b)
+end
+
+function old_draw_map()
   for y = 0, map_display_h do
     for x = 0, map_display_w do
       local map_x, map_y = math.floor(x + ul_corner_x), math.floor(y + ul_corner_y)
@@ -264,3 +350,20 @@ function scroll_if_needed()
   ul_corner_x = ul_corner_x + dx
   ul_corner_y = ul_corner_y + dy
 end
+
+-- This doesn't handle strings yet (ironically).
+function stringify(t)
+  if type(t) == 'table' then
+    local s = '{'
+    for i, v in ipairs(t) do
+      if #s > 1 then s = s .. ', ' end
+      s = s .. stringify(v)
+    end
+    s = s .. '}'
+    return s
+  elseif type(t) == 'number' then
+    return tostring(t)
+  end
+  return 'unknown type'
+end
+
