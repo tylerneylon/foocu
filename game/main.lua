@@ -221,23 +221,47 @@ function draw_sprite(sprite, x, y)
   love.graphics.draw(sprite, x * tile_w + map_offset_x, y * tile_h + map_offset_y)
 end
 
+function draw_bordered_tile(tile_index, border, x, y)
+  draw_sprite(tile[tile_index], x, y)
+  -- Draw the border.
+  love.graphics.setColor(0, 255, 0)
+
+  -- I'll set things up so we draw in a clockwise fashion.
+  local w, h = tile_w - 1, tile_h - 1
+  local pts = {[0] = {0, h}, [1] = {0, 0}, [2] = {w, 0}, [3] = {w, h}}
+  for i, border_code in ipairs(border) do
+    local tx, ty = x * tile_w + map_offset_x, y * tile_h + map_offset_y
+    local start, stop = border_code, (border_code + 1) % 4
+    love.graphics.line(tx + pts[start][1], ty + pts[start][2],
+                       tx + pts[stop][1], ty + pts[stop][2])
+  end
+
+  love.graphics.setColor(255, 255, 255)
+end
+
 function draw_map()
   for y = 0, map_display_h do
     for x = 0, map_display_w do
       local layers = tile_cols[x][y]
+      local border_layers = borders[x][y]
       local tile_index = layers[1]
-      if tile_index == nil then tile_index = layers[2] end
+      local border = border_layers[1]
+      if tile_index == nil then
+        tile_index = layers[2]
+        border = border_layers[2]
+      end
       if tile_index == nil then
         print('Error: both layers are nil at x=' .. x .. ' y=' .. y)
       end
 
       local offset_x = math.floor(ul_corner_x) - ul_corner_x
       local offset_y = math.floor(ul_corner_y) - ul_corner_y
-      draw_sprite(tile[tile_index], x + offset_x, y + offset_y)
+      draw_bordered_tile(tile_index, border, x + offset_x, y + offset_y)
 
       if layers[1] and layers[2] then
+        -- This is a transparent overlay.
         love.graphics.setColor(255, 255, 255, 100)
-        draw_sprite(tile[layers[2]], x + offset_x, y + offset_y)
+        draw_bordered_tile(layers[2], border_layers[2], x + offset_x, y + offset_y)
         love.graphics.setColor(255, 255, 255, 255)
       end
     end
@@ -366,4 +390,3 @@ function stringify(t)
   end
   return 'unknown type'
 end
-
