@@ -11,8 +11,16 @@ max_scale = 6
 
 -- Public functions.
 
+-- This table memoizes output from map_height.
+-- In the future, we could save memory by making it an LRU cache.
+mem_height = {}
 function map_height(x, y)
-  return math.floor(perlin_noise(x / 4, y / 4))
+  if mem_height[x] == nil then mem_height[x] = {} end
+  local val = mem_height[x][y]
+  if val ~= nil then return val end
+  val = math.floor(perlin_noise(x / 4, y / 4))
+  mem_height[x][y] = val
+  return val
 end
 
 
