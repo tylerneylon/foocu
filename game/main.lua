@@ -1,6 +1,9 @@
 require('map')
 
 --[[ TODO
+     NEXT: Working on drawing the blue rectangles correctly, write a function
+           to translate from map_{x,y} to screen_{x,y}.
+
      * Move all map functions from here into map.lua.
      * Separate groups of similar functions into files.
   ]]
@@ -239,6 +242,17 @@ function draw_bordered_tile(tile_index, border, x, y)
   love.graphics.setColor(255, 255, 255)
 end
 
+-- Inputs are in sprite coordinates.
+-- The rectangle is drawn in the current color.
+function draw_rectangle_around_tile(x, y)
+  love.graphics.rectangle(
+      'line',
+      (x - ul_corner_x) * tile_w + map_offset_x,
+      (y - ul_corner_y) * tile_h + map_offset_y,
+      tile_w,
+      tile_h)
+end
+
 function draw_map()
   for y = 0, map_display_h do
     for x = 0, map_display_w do
@@ -270,20 +284,12 @@ function draw_map()
   -- Draw the hero.
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
   local bx, by = math.floor(hero_map_x), math.floor(hero_map_y + 0.3)
-  love.graphics.setColor(0, 0, 255)
-  love.graphics.rectangle(
-      'line',
-      (bx - ul_corner_x) * tile_w + map_offset_x,
-      (by - ul_corner_y) * tile_h + map_offset_y,
-      tile_w * 2,
-      tile_h * 2)
+  love.graphics.setColor(0, 0, 255)  -- Blue.
+  for dx = 0, 1 do for dy = 0, 1 do  -- This syntax is not an accident. I like it, ok?
+    draw_rectangle_around_tile(bx + dx, by + dy)
+  end end
   love.graphics.setColor(255, 255, 255)
-  love.graphics.rectangle(
-      'line',
-      (hx - ul_corner_x) * tile_w + map_offset_x,
-      (hy - ul_corner_y) * tile_h + map_offset_y,
-      tile_w,
-      tile_h)
+  draw_rectangle_around_tile(hx, hy)
   -- The - 1 is to account for the double-height of the hero sprite. We want to draw
   -- his feet on the square were we count him as.
   draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, hero_map_y - ul_corner_y - 1)
