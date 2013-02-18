@@ -1,8 +1,7 @@
 require('map')
 
 --[[ TODO
-     NEXT: Working on drawing the blue rectangles correctly, write a function
-           to translate from map_{x,y} to screen_{x,y}.
+     NEXT: Draw the hero sprite after background but before the foreground.
 
      * Move all map functions from here into map.lua.
      * Separate groups of similar functions into files.
@@ -242,13 +241,18 @@ function draw_bordered_tile(tile_index, border, x, y)
   love.graphics.setColor(255, 255, 255)
 end
 
--- Inputs are in sprite coordinates.
--- The rectangle is drawn in the current color.
-function draw_rectangle_around_tile(x, y)
+-- As the name implies, the inputs are in map sprite coordinates.
+function draw_rect_at_map_point(x, y)
+  local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
+  local hero_height = map_height(hx, hy)
+  local hdiff = map_height(x, y) - hero_height
+
+  local ex, ey = x, y - hdiff  -- e is for effective, meaning adjusted for height.
+
   love.graphics.rectangle(
       'line',
-      (x - ul_corner_x) * tile_w + map_offset_x,
-      (y - ul_corner_y) * tile_h + map_offset_y,
+      (ex - ul_corner_x) * tile_w + map_offset_x,
+      (ey - ul_corner_y) * tile_h + map_offset_y,
       tile_w,
       tile_h)
 end
@@ -286,58 +290,10 @@ function draw_map()
   local bx, by = math.floor(hero_map_x), math.floor(hero_map_y + 0.3)
   love.graphics.setColor(0, 0, 255)  -- Blue.
   for dx = 0, 1 do for dy = 0, 1 do  -- This syntax is not an accident. I like it, ok?
-    draw_rectangle_around_tile(bx + dx, by + dy)
+    draw_rect_at_map_point(bx + dx, by + dy)
   end end
   love.graphics.setColor(255, 255, 255)
-  draw_rectangle_around_tile(hx, hy)
-  -- The - 1 is to account for the double-height of the hero sprite. We want to draw
-  -- his feet on the square were we count him as.
-  draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, hero_map_y - ul_corner_y - 1)
-
-
-  -- Draw the border. Eventually I plan for this to have status info.
-  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  local lr_x, lr_y = map_offset_x + map_display_w * tile_w, map_offset_y + map_display_h * tile_h
-  local r, g, b = love.graphics.getColor()
-  love.graphics.setColor(0, 0, 0)
-  love.graphics.rectangle('fill', 0, 0, map_offset_x, h)
-  love.graphics.rectangle('fill', 0, 0, w, map_offset_y)
-  love.graphics.rectangle('fill', lr_x, 0, w - lr_x, h)
-  love.graphics.rectangle('fill', 0, lr_y, w, h - lr_y)
-  love.graphics.setColor(r, g, b)
-end
-
-function old_draw_map()
-  for y = 0, map_display_h do
-    for x = 0, map_display_w do
-      local map_x, map_y = math.floor(x + ul_corner_x), math.floor(y + ul_corner_y)
-      local tile_index = map(map_x, map_y)
-      local offset_x = math.floor(ul_corner_x) - ul_corner_x
-      local offset_y = math.floor(ul_corner_y) - ul_corner_y
-      local height = map_height(map_x * 4, map_y * 4)  -- The * 4 is temporary to get steeper slopes so I can see this is working.
-      love.graphics.setColor(height, height, height)
-      draw_sprite(tile[tile_index], x + offset_x, y + offset_y)
-      love.graphics.setColor(255, 255, 255)
-    end
-  end
-
-  -- Draw the hero.
-  local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
-  local bx, by = math.floor(hero_map_x), math.floor(hero_map_y + 0.3)
-  love.graphics.setColor(0, 0, 255)
-  love.graphics.rectangle(
-      'line',
-      (bx - ul_corner_x) * tile_w + map_offset_x,
-      (by - ul_corner_y) * tile_h + map_offset_y,
-      tile_w * 2,
-      tile_h * 2)
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.rectangle(
-      'line',
-      (hx - ul_corner_x) * tile_w + map_offset_x,
-      (hy - ul_corner_y) * tile_h + map_offset_y,
-      tile_w,
-      tile_h)
+  draw_rect_at_map_point(hx, hy)
   -- The - 1 is to account for the double-height of the hero sprite. We want to draw
   -- his feet on the square were we count him as.
   draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, hero_map_y - ul_corner_y - 1)
