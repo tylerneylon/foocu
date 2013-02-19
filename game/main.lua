@@ -1,7 +1,7 @@
 require('map')
 
 --[[ TODO
-     NEXT: Draw the hero sprite after background but before the foreground.
+     SOON: Draw the hero sprite after background but before the foreground.
 
      * Move all map functions from here into map.lua.
      * Separate groups of similar functions into files.
@@ -91,8 +91,18 @@ function love.update(dt)
                 right = {1, 0}}
   for key, dir in pairs(dir_by_key) do
     if love.keyboard.isDown(key) then
+
+      local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
+      local old_height = map_height(hx, hy)
+
       hero_map_x = hero_map_x + dir[1] * dt * hero_speed
       hero_map_y = hero_map_y + dir[2] * dt * hero_speed
+
+      hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
+      local new_height = map_height(hx, hy)
+      local hdiff = new_height - old_height
+      ul_corner_y = ul_corner_y + hdiff
+
       scroll_if_needed()
       did_move = true
     end
