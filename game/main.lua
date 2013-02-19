@@ -1,10 +1,11 @@
 require('map')
 
 --[[ TODO
-     SOON: Draw the hero sprite after background but before the foreground.
+     NEXT: Work on an animation when the hero goes up or down a slope.
 
      * Move all map functions from here into map.lua.
      * Separate groups of similar functions into files.
+     (Other todo items are in my notebook.)
   ]]
 
 function int_to_nonneg_int(i)
@@ -267,7 +268,10 @@ function draw_rect_at_map_point(x, y)
       tile_h)
 end
 
-function draw_map()
+-- Accepts either 'background' or 'foreground' for the layer_name.
+function draw_map_layer(layer_name)
+  local is_top_layer = (layer_name == 'foreground')
+
   for y = 0, map_display_h do
     for x = 0, map_display_w do
       local layers = tile_cols[x][y]
@@ -284,30 +288,40 @@ function draw_map()
 
       local offset_x = math.floor(ul_corner_x) - ul_corner_x
       local offset_y = math.floor(ul_corner_y) - ul_corner_y
-      draw_bordered_tile(tile_index, border, x + offset_x, y + offset_y)
 
-      if layers[1] and layers[2] then
-        -- This is a transparent overlay.
-        love.graphics.setColor(255, 255, 255, 100)
-        draw_bordered_tile(layers[2], border_layers[2], x + offset_x, y + offset_y)
-        love.graphics.setColor(255, 255, 255, 255)
+      if not is_top_layer then
+        draw_bordered_tile(tile_index, border, x + offset_x, y + offset_y)
+      else
+        if layers[1] and layers[2] then
+          -- This is a transparent overlay.
+          love.graphics.setColor(255, 255, 255, 100)
+          draw_bordered_tile(layers[2], border_layers[2], x + offset_x, y + offset_y)
+          love.graphics.setColor(255, 255, 255, 255)
+        end
       end
     end
   end
+end
 
-  -- Draw the hero.
+function draw_map()
+  draw_map_layer('background')
+
+  -- Draw the hero and debug outlines.
+  local debug_alpha = 90
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
   local bx, by = math.floor(hero_map_x), math.floor(hero_map_y + 0.3)
-  love.graphics.setColor(0, 0, 255)  -- Blue.
+  love.graphics.setColor(0, 0, 255, debug_alpha)  -- Blue.
   for dx = 0, 1 do for dy = 0, 1 do  -- This syntax is not an accident. I like it, ok?
     draw_rect_at_map_point(bx + dx, by + dy)
   end end
-  love.graphics.setColor(255, 255, 255)
+  love.graphics.setColor(255, 255, 255, debug_alpha)
   draw_rect_at_map_point(hx, hy)
+  love.graphics.setColor(255, 255, 255)
   -- The - 1 is to account for the double-height of the hero sprite. We want to draw
   -- his feet on the square were we count him as.
   draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, hero_map_y - ul_corner_y - 1)
 
+  draw_map_layer('foreground')
 
   -- Draw the border. Eventually I plan for this to have status info.
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
