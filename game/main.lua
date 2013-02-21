@@ -82,32 +82,65 @@ function love.draw()
   draw_map()
 end
 
+-- Variables used for climb/fall animations.
+pending_xy_delta = nil  -- This will have the form {dx, dy}, pre-multiplied by dt and speed.
+pending_anim_time_left = 0
+pending_hdiff = nil
+anim_duration = 0.5
+
 function love.update(dt)
   -- clock = math.floor((love.timer.getMicroTime() - clock_start) / 0.2)
 
-  local did_move = false
-  dir_by_key = {up = {0, -1},
-                down = {0, 1},
-                left = {-1, 0},
-                right = {1, 0}}
-  for key, dir in pairs(dir_by_key) do
-    if love.keyboard.isDown(key) then
+  -- Only do the standard movement if we're not mid-climb/fall.
+  if pending_hdiff == nil then
 
-      local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
-      local old_height = map_height(hx, hy)
+    local did_move = false
+    dir_by_key = {up = {0, -1},
+                  down = {0, 1},
+                  left = {-1, 0},
+                  right = {1, 0}}
+    local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
+    local old_height = map_height(hx, hy)
+    local hero_save_x, hero_save_y = hero_map_x, hero_map_y
 
-      hero_map_x = hero_map_x + dir[1] * dt * hero_speed
-      hero_map_y = hero_map_y + dir[2] * dt * hero_speed
+    local total_dir = {0, 0}
+    for key, dir in pairs(dir_by_key) do
+      if love.keyboard.isDown(key) then
+        for i = 1, 2 do total_dir[i] = total_dir[i] + dir[i] end
+        did_move = true
+      end
+    end
+    hero_map_x = hero_map_x + total_dir[1] * dt * hero_speed
+    hero_map_y = hero_map_y + total_dir[2] * dt * hero_speed
 
-      hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
-      local new_height = map_height(hx, hy)
-      local hdiff = new_height - old_height
-      ul_corner_y = ul_corner_y + hdiff
-
-      scroll_if_needed()
-      did_move = true
+    hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
+    local new_height = map_height(hx, hy)
+    local hdiff = new_height - old_height
+    if hdiff ~= 0 then
+      -- ul_corner_y = ul_corner_y + hdiff
+      pending_xy_delta = {total_dir[1] * dt * hero_speed, total_dir[2] * dt * hero_speed}
+      hero_map_x, hero_map_y = hero_save_x, hero_save_y
+      pending_anim_time_left = anim_duration
+      pending_hdiff = hdiff
     end
   end
+
+  if pending_hdiff then
+    local effective_dt = pending_anim_time_left
+    pending_anim_time_left = pending_anim_time_left - dt
+    if pending_anim_time_left <= 0 then
+      hero_map_x = hero_map_x + pending_xy_delta[1]
+      hero_map_y = hero_map_y + pending_xy_delta[2]
+    else
+      effective_dt = dt
+    end
+    ul_corner_y = ul_corner_y + pending_hdiff * (effective_dt / anim_duration)
+    scroll_if_needed()
+    if pending_anim_time_left <= 0 then pending_hdiff = nil end
+    return
+  end
+
+  scroll_if_needed()
 
   if did_move then
     move_clock = move_clock + dt

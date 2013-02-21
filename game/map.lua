@@ -18,7 +18,7 @@ function map_height(x, y)
   if mem_height[x] == nil then mem_height[x] = {} end
   local val = mem_height[x][y]
   if val ~= nil then return val end
-  val = math.floor(perlin_noise(x / 4, y / 4))
+  val = math.floor(perlin_noise(x / 5, y / 5))
   mem_height[x][y] = val
   return val
 end
