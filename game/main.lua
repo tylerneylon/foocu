@@ -85,15 +85,17 @@ end
 -- Variables used for climb/fall animations.
 pending_xy_delta = nil  -- This will have the form {dx, dy}, pre-multiplied by dt and speed.
 pending_anim_time_left = 0
-pending_hdiff = nil
-anim_duration = 0.5
+pending_hdiff = 0
+hero_float = 0  -- TODO Needed?
+anim_duration = 1.0
 
 function love.update(dt)
+  --print('ul_corner_y=' .. ul_corner_y)
   -- clock = math.floor((love.timer.getMicroTime() - clock_start) / 0.2)
 
   -- Only do the standard movement if we're not mid-climb/fall.
   local did_move = false
-  if pending_hdiff == nil then
+  if pending_hdiff == 0 then
 
     dir_by_key = {up = {0, -1},
                   down = {0, 1},
@@ -116,8 +118,13 @@ function love.update(dt)
     hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
     local new_height = map_height(hx, hy)
     local hdiff = new_height - old_height
-    if hdiff ~= 0 then
-      -- ul_corner_y = ul_corner_y + hdiff
+
+    if hdiff < 0 then  -- It's a fall.
+      pending_xy_delta = {0, 0}
+      pending_anim_time_left = anim_duration
+      pending_hdiff = hdiff
+      ul_corner_y = ul_corner_y + pending_hdiff
+    elseif hdiff > 0 then  -- It's a climb.
       pending_xy_delta = {total_dir[1] * dt * hero_speed, total_dir[2] * dt * hero_speed}
       hero_map_x, hero_map_y = hero_save_x, hero_save_y
       pending_anim_time_left = anim_duration
@@ -125,19 +132,19 @@ function love.update(dt)
     end
   end
 
-  if pending_hdiff then
+  if pending_hdiff ~= 0 then
     local effective_dt = pending_anim_time_left
     pending_anim_time_left = pending_anim_time_left - dt
     if pending_anim_time_left <= 0 then
       hero_map_x = hero_map_x + pending_xy_delta[1]
       hero_map_y = hero_map_y + pending_xy_delta[2]
+      pending_anim_time_left = 0
     else
       effective_dt = dt
     end
-    ul_corner_y = ul_corner_y + pending_hdiff * (effective_dt / anim_duration)
-    scroll_if_needed()
-    if pending_anim_time_left <= 0 then pending_hdiff = nil end
-    return
+    -- ul_corner_y = ul_corner_y + pending_hdiff * (effective_dt / anim_duration)
+    -- TODO Clean up all this animation code. It is sloppy as I'm figuring it out.
+    if pending_anim_time_left <= 0 then pending_hdiff = 0 end
   end
 
   scroll_if_needed()
@@ -148,6 +155,21 @@ function love.update(dt)
   end
 
   recalc_zbuffer()
+end
+
+-- For a fall, this will go from N down to 0. (Always non-negative.)
+-- For a climb, this will go from 0 up to N.  (Always non-negative.)
+-- I expect it to be used to draw the hero as something like:
+--   drawn_y = standing_still_y - hero_anim_offset()
+function hero_anim_offset()
+  local perc_left = pending_anim_time_left / anim_duration
+  if pending_hdiff < 0 then
+    return pending_hdiff * -1 * perc_left
+  elseif pending_hdiff > 0 then
+    -- TODO Anim offset for a climb.
+  else
+    return 0
+  end
 end
 
 --[[ Returns a list of elements from (0, 1, 2, 3) indicating which borders
@@ -352,7 +374,7 @@ function draw_map()
   love.graphics.setColor(255, 255, 255)
   -- The - 1 is to account for the double-height of the hero sprite. We want to draw
   -- his feet on the square were we count him as.
-  draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, hero_map_y - ul_corner_y - 1)
+  draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, hero_map_y - ul_corner_y - 1 - hero_anim_offset())
 
   draw_map_layer('foreground')
 
