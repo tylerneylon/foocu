@@ -92,9 +92,9 @@ function love.update(dt)
   -- clock = math.floor((love.timer.getMicroTime() - clock_start) / 0.2)
 
   -- Only do the standard movement if we're not mid-climb/fall.
+  local did_move = false
   if pending_hdiff == nil then
 
-    local did_move = false
     dir_by_key = {up = {0, -1},
                   down = {0, 1},
                   left = {-1, 0},
