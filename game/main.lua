@@ -57,7 +57,7 @@ function love.load()
   -- These are all in sprite coordinates.
   ul_corner_x = 0
   ul_corner_y = 0
-  scroll_frame = 2  -- In sprites. We scroll if the hero tries to move into this frame.
+  scroll_frame = 3  -- In sprites. We scroll if the hero tries to move into this frame.
 
   -- These are in sprites, and are allowed to be non-integers.
   hero_map_x = map_display_w / 2
@@ -409,7 +409,7 @@ function scroll_if_needed()
   -- up by the hero sprite itself.  We wouldn't need that - 1 if the
   -- hero were just a single point.
   local dx, dy = delta_from_rect(
-      hero_map_x, hero_map_y,
+      hero_map_x, hero_map_y - hero_anim_offset(),
       ul_corner_x + scroll_frame, ul_corner_y + scroll_frame,
       map_display_w - 2 * scroll_frame - 1, map_display_h - 2 * scroll_frame - 1)
   
