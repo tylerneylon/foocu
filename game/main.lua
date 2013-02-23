@@ -1,7 +1,7 @@
 require('map')
 
 --[[ TODO
-     NEXT: Work on an animation when the hero goes up or down a slope.
+     NEXT: Fix scroll_if_needed() to account for hero_anim_offset().
 
      * Move all map functions from here into map.lua.
      * Separate groups of similar functions into files.
@@ -87,7 +87,7 @@ pending_xy_delta = nil  -- This will have the form {dx, dy}, pre-multiplied by d
 pending_anim_time_left = 0
 pending_hdiff = 0
 hero_float = 0  -- TODO Needed?
-anim_duration = 1.0
+anim_duration = 0.08
 
 function love.update(dt)
   --print('ul_corner_y=' .. ul_corner_y)
@@ -138,6 +138,7 @@ function love.update(dt)
     if pending_anim_time_left <= 0 then
       hero_map_x = hero_map_x + pending_xy_delta[1]
       hero_map_y = hero_map_y + pending_xy_delta[2]
+      if pending_hdiff > 0 then ul_corner_y = ul_corner_y + pending_hdiff end
       pending_anim_time_left = 0
     else
       effective_dt = dt
@@ -166,7 +167,7 @@ function hero_anim_offset()
   if pending_hdiff < 0 then
     return pending_hdiff * -1 * perc_left
   elseif pending_hdiff > 0 then
-    -- TODO Anim offset for a climb.
+    return pending_hdiff * (1 - perc_left)
   else
     return 0
   end
