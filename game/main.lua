@@ -1,10 +1,26 @@
 require('map')
 
 --[[ TODO
-     NEXT: Fix scroll_if_needed() to account for hero_anim_offset().
 
+     Soon:
+     * Change hero movement so he is considered to take up space instead of
+       being a single point in space. Use multiple sprites to determine where
+       he can walk or if he will fall; disallow walking partially into walls.
+     * Check that multi-height slopes are not getting extra green borders.
      * Move all map functions from here into map.lua.
      * Separate groups of similar functions into files.
+     * Make 1-height changes 1/3rd of a cube in size, semi-Lego-ish.
+     * Make a single map sprite (an xy-square) have 1:1 pixel ratio (square).
+
+     Soonish (which occurs after soon unless I feel otherwise):
+     * Add biomes.
+     * Modify height calculation based on biomes.
+     * Add shacks, villages, towns, and cities.
+     * Add roads of appropriate sizes between dwellings.
+
+     Later:
+     * Improve map sections transparency.
+
      (Other todo items are in my notebook.)
   ]]
 
