@@ -67,9 +67,9 @@ function love.load()
   -- map variables
   map_offset_x, map_offset_y = 30, 30  -- In pixels.
   map_display_w = 14  -- In sprites.
-  map_display_h = 20
+  map_display_h = 30
   tile_w = 48  -- In pixels.
-  tile_h = 24
+  tile_h = 16
   -- These are all in sprite coordinates.
   ul_corner_x = 0
   ul_corner_y = 0
@@ -79,15 +79,12 @@ function love.load()
   hero_map_x = map_display_w / 2
   hero_map_y = map_display_h / 2
 
-  -- love.graphics.setScissor(map_offset_x, map_offset_y, map_display_w * tile_size, map_display_h * tile_size)
-
   -- moving variables
   hero_speed = 2.5  -- In sprites per second.
   hero_sprite = 0
   move_clock = 0  -- A float that counts up in seconds as the hero moves.
   move_tick = 0.07  -- In seconds, how often a moving hero sprite changes.
 
-  print("hi command line")
   for key, value in pairs(_G) do
     print(key, value)
   end
@@ -102,7 +99,6 @@ end
 pending_xy_delta = nil  -- This will have the form {dx, dy}, pre-multiplied by dt and speed.
 pending_anim_time_left = 0
 pending_hdiff = 0
-hero_float = 0  -- TODO Needed?
 anim_duration = 0.08
 
 function love.update(dt)
@@ -226,14 +222,15 @@ function recalc_zbuffer()
   -- base_{x,y} are the screen coordinates before accounting for h_diff. They should be
   -- integers, and y may be off the visible screen, including negative.
   function add_point_to_zbuffer(base_x, base_y, tile_index, hdiff, top_layer)
-    -- print('add_point_to_zbuffer(' .. base_x .. ', ' .. base_y .. ', ' .. tile_index .. ', ' .. hdiff .. ', ..)')
+    --[[ print('add_point_to_zbuffer(' .. base_x .. ', ' .. base_y .. ', ' ..
+          tile_index .. ', ' .. hdiff .. ', ..)') ]]
     top_layer = top_layer or false  -- Now top_layer should always be a bool.
-    add_tile_to_zbuffer(base_x, base_y - hdiff, tile_index, top_layer)
+    add_tile_to_zbuffer(base_x, 3 * base_y - hdiff, tile_index, top_layer)
     if last_hdiff ~= nil and hdiff < last_hdiff then
       -- print('in the slope block')
       -- We may need to put some slopes in here.
       for hd = hdiff + 1, last_hdiff do  -- Not (last_hdiff - 1) because last time base_y was 1 lower.
-        add_tile_to_zbuffer(base_x, base_y - hd, 2, top_layer)
+        add_tile_to_zbuffer(base_x, 3 * base_y - hd, 2, top_layer)
       end
     end
     last_hdiff = hdiff
@@ -246,6 +243,10 @@ function recalc_zbuffer()
     if borders[x][y] == nil then borders[x][y] = {} end
     if tile_cols[x][y][1] and top_layer then bkg_fg_index = 2 end
     tile_cols[x][y][bkg_fg_index] = tile_index
+    if tile_index < 2 then for dy = 1, 2 do
+      if tile_cols[x][y + dy] == nil then tile_cols[x][y + dy] = {} end
+      tile_cols[x][y + dy][bkg_fg_index] = -1  -- Indicate do-not-draw here.
+    end end
     -- print('borders=' .. stringify(borders))
     -- print('borders[x]=' .. stringify(borders[x]))
     -- print('borders[x][y]=' .. stringify(borders[x][y]))
@@ -261,7 +262,8 @@ function recalc_zbuffer()
     borders[x] = {}
     bkg_fg_index = 1
     local y = 0
-    while y <= map_display_h or tile_cols[x][map_display_h] == nil do
+    local map_sprites_h = math.floor(map_display_h  / 3) + 1
+    while y <= map_sprites_h or tile_cols[x][map_display_h] == nil do
       -- print('y=' .. y)
       -- print('tile_cols[' .. x .. '][' .. map_display_h .. ']=' .. type(tile_cols[x][map_display_h]))
       local map_x, map_y = math.floor(x + ul_corner_x), math.floor(y + ul_corner_y)
@@ -307,6 +309,8 @@ function draw_sprite(sprite, x, y)
 end
 
 function draw_bordered_tile(tile_index, border, x, y)
+  if tile_index == -1 then return end
+
   draw_sprite(tile[tile_index], x, y)
   -- Draw the border.
   love.graphics.setColor(0, 255, 0)
