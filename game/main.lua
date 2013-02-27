@@ -206,7 +206,7 @@ function get_border(map_x, map_y)
 end
 
 function recalc_zbuffer()
-  -- print('recalc_zbuffer()')
+  print('recalc_zbuffer()')
 
   -- Reset the zbuffer, which we call tile_cols. I could rename either
   -- this function or the variable so it's more obvious they refer to the same thing.
@@ -238,7 +238,7 @@ function recalc_zbuffer()
 
   function add_tile_to_zbuffer(x, y, tile_index, top_layer)
     -- print('add_tile_to_zbuffer(' .. x .. ', ' .. y .. ', ..)')
-    if y < 0 or y > map_display_h then return end
+    if y < -2 or y > map_display_h then return end
     if tile_cols[x][y] == nil then tile_cols[x][y] = {} end
     if borders[x][y] == nil then borders[x][y] = {} end
     if tile_cols[x][y][1] and top_layer then bkg_fg_index = 2 end
@@ -273,15 +273,18 @@ function recalc_zbuffer()
       local hdiff = height - hero_height
       this_border = get_border(map_x, map_y)
       -- print('hdiff=' .. hdiff)
-      local screen_y = y - hdiff
+      local screen_y = 3 * y - hdiff
+      if x == 0 then print('screen_y=' .. screen_y) end
       if y == 0 then
         -- tile_cols[x][y + hdiff] = tile_index
         local dy = 0
         while screen_y > 0 do
           dy = dy - 1
           hdiff = map_height(map_x, map_y + dy) - hero_height
-          screen_y = y - hdiff
+          screen_y = 3 * y - hdiff
+          if x == 0 then print('screen_y=' .. screen_y) end
         end
+        if x == 0 then print('ended with dy=' .. dy) end
         while dy <= 0 do
           -- print('dy=' .. dy)
           tile_index = map(map_x, map_y + dy)
@@ -296,7 +299,12 @@ function recalc_zbuffer()
       end
       y = y + 1
     end
+    print('At end of x=' .. x .. ', tile_cols[0][0]=' .. s(tile_cols[0][0]))
+    if x == 0 then
+      print('left-most-col=' .. full_stringify(tile_cols[0]))
+    end
   end
+  print('At end of recalc_zbuffer, tile_cols[0][0]=' .. s(tile_cols[0][0]))
 end
 
 function love.keypressed(key, unicode)
@@ -346,11 +354,15 @@ end
 
 -- Accepts either 'background' or 'foreground' for the layer_name.
 function draw_map_layer(layer_name)
+  print('At start of draw_map_layer, tile_cols[0][0]=' .. s(tile_cols[0][0]))
   local is_top_layer = (layer_name == 'foreground')
 
   for y = 0, map_display_h do
     for x = 0, map_display_w do
       local layers = tile_cols[x][y]
+      if layers == nil then
+        print('nil layers at x=' .. x .. ', y=' .. y)
+      end
       local border_layers = borders[x][y]
       local tile_index = layers[1]
       local border = border_layers[1]
@@ -451,4 +463,30 @@ function stringify(t)
     return tostring(t)
   end
   return 'unknown type'
+end
+
+-- This version also prints out table keys.
+function full_stringify(t)
+  if type(t) == 'table' then
+    local s = '{'
+    for k, v in pairs(t) do
+      if #s > 1 then s = s .. ', ' end
+      s = s .. ('[' .. stringify(k) .. ']=')
+      s = s .. stringify(v)
+    end
+    s = s .. '}'
+    return s
+  elseif type(t) == 'number' then
+    return tostring(t)
+  end
+  return 'unknown type'
+end
+
+
+-- This always returns a short string representation of t.
+-- I'm originally writing it to be able to concatenate possibly-nil values
+-- via the .. operator.
+function s(t)
+  if type(t) == 'string' then return "'" .. t .. "'" end
+  return '<' .. type(t) .. '>'
 end
