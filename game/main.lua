@@ -54,7 +54,7 @@ function love.load()
   -- our tiles
   tile = {}
   for i = 0, 2 do
-    tile[i] = love.graphics.newImage("img/flat_tile" .. i .. ".png")
+    tile[i] = love.graphics.newImage("img/tile" .. i .. ".png")
   end
 
   hero = {}
@@ -206,7 +206,6 @@ function get_border(map_x, map_y)
 end
 
 function recalc_zbuffer()
-  print('recalc_zbuffer()')
 
   -- Reset the zbuffer, which we call tile_cols. I could rename either
   -- this function or the variable so it's more obvious they refer to the same thing.
@@ -274,7 +273,6 @@ function recalc_zbuffer()
       this_border = get_border(map_x, map_y)
       -- print('hdiff=' .. hdiff)
       local screen_y = 3 * y - hdiff
-      if x == 0 then print('screen_y=' .. screen_y) end
       if y == 0 then
         -- tile_cols[x][y + hdiff] = tile_index
         local dy = 0
@@ -282,9 +280,7 @@ function recalc_zbuffer()
           dy = dy - 1
           hdiff = map_height(map_x, map_y + dy) - hero_height
           screen_y = 3 * y - hdiff
-          if x == 0 then print('screen_y=' .. screen_y) end
         end
-        if x == 0 then print('ended with dy=' .. dy) end
         while dy <= 0 do
           -- print('dy=' .. dy)
           tile_index = map(map_x, map_y + dy)
@@ -299,12 +295,7 @@ function recalc_zbuffer()
       end
       y = y + 1
     end
-    print('At end of x=' .. x .. ', tile_cols[0][0]=' .. s(tile_cols[0][0]))
-    if x == 0 then
-      print('left-most-col=' .. full_stringify(tile_cols[0]))
-    end
   end
-  print('At end of recalc_zbuffer, tile_cols[0][0]=' .. s(tile_cols[0][0]))
 end
 
 function love.keypressed(key, unicode)
@@ -354,7 +345,6 @@ end
 
 -- Accepts either 'background' or 'foreground' for the layer_name.
 function draw_map_layer(layer_name)
-  print('At start of draw_map_layer, tile_cols[0][0]=' .. s(tile_cols[0][0]))
   local is_top_layer = (layer_name == 'foreground')
 
   for y = 0, map_display_h do
@@ -364,6 +354,7 @@ function draw_map_layer(layer_name)
         print('nil layers at x=' .. x .. ', y=' .. y)
       end
       local border_layers = borders[x][y]
+      if border_layers == nil then border_layers = {nil, nil} end
       local tile_index = layers[1]
       local border = border_layers[1]
       if tile_index == nil then
