@@ -77,7 +77,7 @@ function love.load()
 
   -- These are in sprites, and are allowed to be non-integers.
   hero_map_x = map_display_w / 2
-  hero_map_y = map_display_h / 2
+  hero_map_y = map_display_h / 6
 
   -- moving variables
   hero_speed = 2.5  -- In sprites per second.
@@ -333,14 +333,14 @@ function draw_rect_at_map_point(x, y)
   local hero_height = map_height(hx, hy)
   local hdiff = map_height(x, y) - hero_height
 
-  local ex, ey = x, y - hdiff  -- e is for effective, meaning adjusted for height.
+  local ex, ey = x, y - hdiff / 3  -- e is for effective, meaning adjusted for height.
 
   love.graphics.rectangle(
       'line',
       (ex - ul_corner_x) * tile_w + map_offset_x,
-      (ey - ul_corner_y) * tile_h + map_offset_y,
+      (ey - ul_corner_y) * 3 * tile_h + map_offset_y,
       tile_w,
-      tile_h)
+      tile_h * 3)
 end
 
 -- Accepts either 'background' or 'foreground' for the layer_name.
@@ -398,7 +398,7 @@ function draw_map()
   love.graphics.setColor(255, 255, 255)
   -- The - 1 is to account for the double-height of the hero sprite. We want to draw
   -- his feet on the square were we count him as.
-  draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, hero_map_y - ul_corner_y - 1 - hero_anim_offset())
+  draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, (hero_map_y - ul_corner_y) * 3 - 1 - hero_anim_offset())
 
   draw_map_layer('foreground')
 
@@ -481,3 +481,4 @@ function s(t)
   if type(t) == 'string' then return "'" .. t .. "'" end
   return '<' .. type(t) .. '>'
 end
+
