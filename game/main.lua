@@ -434,7 +434,7 @@ function scroll_if_needed()
   local dx, dy = delta_from_rect(
       hero_map_x, hero_map_y - hero_anim_offset(),
       ul_corner_x + scroll_frame, ul_corner_y + scroll_frame,
-      map_display_w - 2 * scroll_frame - 1, map_display_h - 2 * scroll_frame - 1)
+      map_display_w - 2 * scroll_frame - 1, map_display_h / 3 - 2 * scroll_frame - 1)
   
   ul_corner_x = ul_corner_x + dx
   ul_corner_y = ul_corner_y + dy
