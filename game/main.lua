@@ -18,9 +18,14 @@ require('map')
      * Modify height calculation based on biomes.
      * Add shacks, villages, towns, and cities.
      * Add roads of appropriate sizes between dwellings.
+     * Line lengths limited by 80 chars.
+     * Remove 3 as a magin number in 3rd-height slopes.
+     * Factor out the hero_map_xy-to-map_squares_occupied code.
 
      Later:
      * Improve map sections transparency.
+     * Make independent files also independent code-wise (for now I'm afraid
+       they may rely on globals).
 
      (Other todo items are in my notebook.)
   ]]
@@ -107,7 +112,8 @@ function love.update(dt)
   -- clock = math.floor((love.timer.getMicroTime() - clock_start) / 0.2)
 
   -- Only do the standard movement if we're not mid-climb/fall.
-  local did_move = false
+  did_move = false
+  -- local did_move = false  -- When not debugging, maybe this should be local.
   if pending_hdiff == 0 then
 
     dir_by_key = {up = {0, -1},
@@ -168,7 +174,13 @@ function love.update(dt)
     hero_sprite = math.floor(move_clock / move_tick) % 2
   end
 
+  -- TODO Maybe this should only be done if did_move is true.
   recalc_zbuffer()
+
+  print_if_moved('dt=' .. dt)
+  print_if_moved('ul_corner = (' .. ul_corner_x .. ', ' .. ul_corner_y .. ')')
+  print_if_moved('hero_map = (' .. hero_map_x .. ', ' ..
+                 hero_map_y .. ')')
 end
 
 -- For a fall, this will go from N down to 0. (Always non-negative.)
@@ -370,3 +382,7 @@ function s(t)
   return '<' .. type(t) .. '>'
 end
 
+did_move = false
+function print_if_moved(s)
+  if did_move then print(s) end
+end

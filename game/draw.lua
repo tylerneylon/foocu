@@ -10,6 +10,7 @@ function draw_sprite(sprite, x, y)
   love.graphics.draw(sprite, x * tile_w + map_offset_x, y * tile_h + map_offset_y)
 end
 
+-- The input x, y are in screen sprite coordinates.
 function draw_bordered_tile(tile_index, border, x, y)
   if tile_index == -1 then return end
 
@@ -32,11 +33,13 @@ end
 
 -- As the name implies, the inputs are in map sprite coordinates.
 function draw_rect_at_map_point(x, y)
+  print_if_moved('draw_rect_at_map_point(' .. x .. ', ' .. y .. ')')
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
   local hero_height = map_height(hx, hy)
   local hdiff = map_height(x, y) - hero_height
 
   local ex, ey = x, y - hdiff / 3  -- e is for effective, meaning adjusted for height.
+  print_if_moved('(ex, ey) = (' .. ex .. ', ' .. ey .. ')')
 
   love.graphics.rectangle(
       'line',
@@ -68,8 +71,9 @@ function draw_map_layer(layer_name)
         print('Error: both layers are nil at x=' .. x .. ' y=' .. y)
       end
 
+      -- Convert the offset from map to screen coordinates.
       local offset_x = math.floor(ul_corner_x) - ul_corner_x
-      local offset_y = math.floor(ul_corner_y) - ul_corner_y
+      local offset_y = (math.floor(ul_corner_y) - ul_corner_y) * 3
 
       if not is_top_layer then
         draw_bordered_tile(tile_index, border, x + offset_x, y + offset_y)
