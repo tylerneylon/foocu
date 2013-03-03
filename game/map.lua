@@ -1,13 +1,9 @@
--- map.lua
--- Functions to generate a nice random map.
+--[[ map.lua
 
+     Map height and sprite functions for foocu.
+  ]]
 
--- Globals.
-
-seed = 47
-rand_max = 65535
-max_scale = 6
-
+require('util')
 
 -- Public functions.
 
@@ -22,6 +18,18 @@ function map_height(x, y)
   mem_height[x][y] = val
   return val
 end
+
+function map(x, y)
+  v = pair_to_pos_int(x, y)
+  return rand_next(rand_next(v)) % 2
+end
+
+-- Globals.
+
+seed = 47
+rand_max = 65535
+max_scale = 6
+
 
 
 -- Private functions.
