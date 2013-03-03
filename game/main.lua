@@ -332,7 +332,7 @@ function scroll_if_needed()
   -- up by the hero sprite itself.  We wouldn't need that - 1 if the
   -- hero were just a single point.
   local dx, dy = delta_from_rect(
-      hero_map_x, hero_map_y - hero_anim_offset(),
+      hero_map_x, hero_map_y - hero_anim_offset() / 3,
       ul_corner_x + scroll_frame, ul_corner_y + scroll_frame,
       map_display_w - 2 * scroll_frame - 1, map_display_h / 3 - 2 * scroll_frame - 1)
   
