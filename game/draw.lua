@@ -77,10 +77,13 @@ function draw_map_layer(layer_name)
           draw_bordered_tile(tile_index, border, x + offset_x, y + offset_y)
         else
           if layers[1] and layers[2] then
-            -- This is a transparent overlay.
-            love.graphics.setColor(255, 255, 255, 100)
+            --[[ The original system was designed to make this a transparent
+                 overlay. However, the original system looked bad. I need to
+                 redesign the transparency system, and for now I'll just draw
+                 everything opaque. ]]
+            -- love.graphics.setColor(255, 255, 255, 100)
             draw_bordered_tile(layers[2], border_layers[2], x + offset_x, y + offset_y)
-            love.graphics.setColor(255, 255, 255, 255)
+            -- love.graphics.setColor(255, 255, 255, 255)
           end
         end
       end

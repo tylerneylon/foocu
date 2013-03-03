@@ -311,9 +311,6 @@ function recalc_zbuffer()
   end
 end
 
-function love.keypressed(key, unicode)
-end
-
 -- Returns the smallest dx, dy so that (px - dx, py - dy) is inside the rect.
 function delta_from_rect(px, py, rect_x, rect_y, rect_w, rect_h)
   local dx, dy = 0, 0
