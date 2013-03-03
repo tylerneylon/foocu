@@ -142,7 +142,7 @@ function love.update(dt)
       pending_xy_delta = {0, 0}
       pending_anim_time_left = anim_duration
       pending_hdiff = hdiff
-      ul_corner_y = ul_corner_y + pending_hdiff
+      ul_corner_y = ul_corner_y + pending_hdiff / 3
     elseif hdiff > 0 then  -- It's a climb.
       pending_xy_delta = {total_dir[1] * dt * hero_speed, total_dir[2] * dt * hero_speed}
       hero_map_x, hero_map_y = hero_save_x, hero_save_y
@@ -157,7 +157,7 @@ function love.update(dt)
     if pending_anim_time_left <= 0 then
       hero_map_x = hero_map_x + pending_xy_delta[1]
       hero_map_y = hero_map_y + pending_xy_delta[2]
-      if pending_hdiff > 0 then ul_corner_y = ul_corner_y + pending_hdiff end
+      if pending_hdiff > 0 then ul_corner_y = ul_corner_y + pending_hdiff / 3 end
       pending_anim_time_left = 0
     else
       effective_dt = dt
