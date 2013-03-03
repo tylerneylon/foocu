@@ -19,7 +19,7 @@ function draw_bordered_tile(tile_index, border, x, y)
   love.graphics.setColor(0, 255, 0)
 
   -- I'll set things up so we draw in a clockwise fashion.
-  local w, h = tile_w - 1, tile_h - 1
+  local w, h = tile_w - 1, tile_h * 3 - 1
   local pts = {[0] = {0, h}, [1] = {0, 0}, [2] = {w, 0}, [3] = {w, h}}
   for i, border_code in ipairs(border) do
     local tx, ty = x * tile_w + map_offset_x, y * tile_h + map_offset_y
