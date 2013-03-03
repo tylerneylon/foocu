@@ -53,36 +53,35 @@ end
 function draw_map_layer(layer_name)
   local is_top_layer = (layer_name == 'foreground')
 
-  for y = 0, map_display_h do
+  for y = -2, map_display_h + 2 do
     for x = 0, map_display_w do
       local layers = tile_cols[x][y]
-      if layers == nil then
-        print('nil layers at x=' .. x .. ', y=' .. y)
-      end
-      local border_layers = borders[x][y]
-      if border_layers == nil then border_layers = {nil, nil} end
-      local tile_index = layers[1]
-      local border = border_layers[1]
-      if tile_index == nil then
-        tile_index = layers[2]
-        border = border_layers[2]
-      end
-      if tile_index == nil then
-        print('Error: both layers are nil at x=' .. x .. ' y=' .. y)
-      end
+      if layers ~= nil then
+        local border_layers = borders[x][y]
+        if border_layers == nil then border_layers = {nil, nil} end
+        local tile_index = layers[1]
+        local border = border_layers[1]
+        if tile_index == nil then
+          tile_index = layers[2]
+          border = border_layers[2]
+        end
+        if tile_index == nil then
+          print('Error: both layers are nil at x=' .. x .. ' y=' .. y)
+        end
 
-      -- Convert the offset from map to screen coordinates.
-      local offset_x = math.floor(ul_corner_x) - ul_corner_x
-      local offset_y = (math.floor(ul_corner_y) - ul_corner_y) * 3
+        -- Convert the offset from map to screen coordinates.
+        local offset_x = math.floor(ul_corner_x) - ul_corner_x
+        local offset_y = (math.floor(ul_corner_y) - ul_corner_y) * 3
 
-      if not is_top_layer then
-        draw_bordered_tile(tile_index, border, x + offset_x, y + offset_y)
-      else
-        if layers[1] and layers[2] then
-          -- This is a transparent overlay.
-          love.graphics.setColor(255, 255, 255, 100)
-          draw_bordered_tile(layers[2], border_layers[2], x + offset_x, y + offset_y)
-          love.graphics.setColor(255, 255, 255, 255)
+        if not is_top_layer then
+          draw_bordered_tile(tile_index, border, x + offset_x, y + offset_y)
+        else
+          if layers[1] and layers[2] then
+            -- This is a transparent overlay.
+            love.graphics.setColor(255, 255, 255, 100)
+            draw_bordered_tile(layers[2], border_layers[2], x + offset_x, y + offset_y)
+            love.graphics.setColor(255, 255, 255, 255)
+          end
         end
       end
     end

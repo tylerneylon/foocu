@@ -250,7 +250,7 @@ function recalc_zbuffer()
 
   function add_tile_to_zbuffer(x, y, tile_index, top_layer)
     -- print('add_tile_to_zbuffer(' .. x .. ', ' .. y .. ', ..)')
-    if y < -2 or y > map_display_h then return end
+    if y < -2 or y > map_display_h + 2 then return end
     if tile_cols[x][y] == nil then tile_cols[x][y] = {} end
     if borders[x][y] == nil then borders[x][y] = {} end
     if tile_cols[x][y][1] and top_layer then bkg_fg_index = 2 end
@@ -275,7 +275,7 @@ function recalc_zbuffer()
     bkg_fg_index = 1
     local y = 0
     local map_sprites_h = math.floor(map_display_h  / 3) + 1
-    while y <= map_sprites_h or tile_cols[x][map_display_h] == nil do
+    while y <= map_sprites_h or tile_cols[x][map_display_h + 2] == nil do
       -- print('y=' .. y)
       -- print('tile_cols[' .. x .. '][' .. map_display_h .. ']=' .. type(tile_cols[x][map_display_h]))
       local map_x, map_y = math.floor(x + ul_corner_x), math.floor(y + ul_corner_y)
