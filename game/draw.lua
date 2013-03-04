@@ -39,13 +39,13 @@ end
 
 -- As the name implies, the inputs are in map sprite coordinates.
 function draw_rect_at_map_point(x, y)
-  print_if_moved('draw_rect_at_map_point(' .. x .. ', ' .. y .. ')')
+  -- print_if_moved('draw_rect_at_map_point(' .. x .. ', ' .. y .. ')')
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
   local hero_height = map_height(hx, hy)
   local hdiff = map_height(x, y) - hero_height
 
   local ex, ey = x, y - hdiff / 3  -- e is for effective, meaning adjusted for height.
-  print_if_moved('(ex, ey) = (' .. ex .. ', ' .. ey .. ')')
+  -- print_if_moved('(ex, ey) = (' .. ex .. ', ' .. ey .. ')')
 
   love.graphics.rectangle(
       'line',

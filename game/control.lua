@@ -73,10 +73,9 @@ function update(dt)
   -- TODO Maybe this should only be done if did_move is true.
   recalc_zbuffer()
 
-  print_if_moved('dt=' .. dt)
-  print_if_moved('ul_corner = (' .. ul_corner_x .. ', ' .. ul_corner_y .. ')')
-  print_if_moved('hero_map = (' .. hero_map_x .. ', ' ..
-                 hero_map_y .. ')')
+  -- print_if_moved('dt=' .. dt)
+  -- print_if_moved('ul_corner = (' .. ul_corner_x .. ', ' .. ul_corner_y .. ')')
+  -- print_if_moved('hero_map = (' .. hero_map_x .. ', ' .. hero_map_y .. ')')
 end
 
 
