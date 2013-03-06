@@ -17,7 +17,7 @@ function draw_sprite(sprite, x, y)
 end
 
 -- The input x, y are in screen sprite coordinates.
-function draw_bordered_tile(tile_index, border, x, y)
+function draw_bordered_tile(tile_index, shadow, border, x, y)
   if tile_index == -1 then return end
 
   draw_sprite(tile[tile_index], x, y)
@@ -64,12 +64,16 @@ function draw_map_layer(layer_name)
       local layers = tile_cols[x][y]
       if layers ~= nil then
         local border_layers = borders[x][y]
+        local shadow_layers = shadows[x][y]
         if border_layers == nil then border_layers = {nil, nil} end
+        if shadow_layers == nil then shadow_layers = {nil, nil} end
         local tile_index = layers[1]
         local border = border_layers[1]
+        local shadow = shadow_layers[1]
         if tile_index == nil then
           tile_index = layers[2]
           border = border_layers[2]
+          shadow = shadow_layers[2]
         end
         if tile_index == nil then
           print('Error: both layers are nil at x=' .. x .. ' y=' .. y)
@@ -80,7 +84,7 @@ function draw_map_layer(layer_name)
         local offset_y = (math.floor(ul_corner_y) - ul_corner_y) * 3
 
         if not is_top_layer then
-          draw_bordered_tile(tile_index, border, x + offset_x, y + offset_y)
+          draw_bordered_tile(tile_index, shadow, border, x + offset_x, y + offset_y)
         else
           if layers[1] and layers[2] then
             --[[ The original system was designed to make this a transparent
@@ -88,7 +92,8 @@ function draw_map_layer(layer_name)
                  redesign the transparency system, and for now I'll just draw
                  everything opaque. ]]
             -- love.graphics.setColor(255, 255, 255, 100)
-            draw_bordered_tile(layers[2], border_layers[2], x + offset_x, y + offset_y)
+            draw_bordered_tile(layers[2], shadow_layers[2], border_layers[2],
+                               x + offset_x, y + offset_y)
             -- love.graphics.setColor(255, 255, 255, 255)
           end
         end
@@ -213,6 +218,7 @@ function get_shadow(map_x, map_y)
   if right_is_higher and down_is_higher then
     -- This is a special case where dr_is_higher doesn't matter.
     shadow = {0, 2, 4}
+  end
   return shadow
 end
 
@@ -223,11 +229,13 @@ function recalc_zbuffer()
   -- tile_cols[col#][row#] = {bkg_tile, fg_tile} or just {bkg_tile}.
   tile_cols = {}
   borders = {}
+  shadows = {}
 
   -- Variables to be used in the functions below.
   local last_hdiff = nil
   local bkg_fg_index = 1
   local this_border = nil
+  local this_shadow = nil
 
   -- base_{x,y} are the screen coordinates before accounting for h_diff. They should be
   -- integers, and y may be off the visible screen, including negative.
@@ -251,6 +259,7 @@ function recalc_zbuffer()
     if y < -2 or y > map_display_h + 2 then return end
     if tile_cols[x][y] == nil then tile_cols[x][y] = {} end
     if borders[x][y] == nil then borders[x][y] = {} end
+    if shadows[x][y] == nil then shadows[x][y] = {} end
     if tile_cols[x][y][1] and top_layer then bkg_fg_index = 2 end
     tile_cols[x][y][bkg_fg_index] = tile_index
     if tile_index < 2 then for dy = 1, 2 do
@@ -261,6 +270,7 @@ function recalc_zbuffer()
     -- print('borders[x]=' .. stringify(borders[x]))
     -- print('borders[x][y]=' .. stringify(borders[x][y]))
     borders[x][y][bkg_fg_index] = this_border
+    shadows[x][y][bkg_fg_index] = this_shadow
   end
 
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
@@ -270,6 +280,7 @@ function recalc_zbuffer()
     -- print('x=' .. x)
     tile_cols[x] = {}
     borders[x] = {}
+    shadows[x] = {}
     bkg_fg_index = 1
     local y = 0
     local map_sprites_h = math.floor(map_display_h  / 3) + 1
@@ -282,6 +293,7 @@ function recalc_zbuffer()
       -- print('height=' .. height)
       local hdiff = height - hero_height
       this_border = get_border(map_x, map_y)
+      this_shadow = get_shadow(map_x, map_y)
       -- print('hdiff=' .. hdiff)
       local screen_y = 3 * y - hdiff
       if y == 0 then
