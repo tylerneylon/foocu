@@ -10,6 +10,11 @@
         and do that.
   ]]
 
+
+-- Globals
+
+shadow_debug_mode = false
+
 -- For this function, the input sprite is an image.
 -- This takes care of map_offset_{x,y} for sprites.
 function draw_sprite(sprite, x, y)
@@ -20,10 +25,11 @@ end
 function draw_shadow(shadow, x, y)
   local x_size = 0.2  -- As a fraction of a (map) sprite.
   local x_start = 1.0 - x_size
-  local y_size = 0.4
+  local y_size = 0.45
   local y_start = 1.0 - y_size
 
   love.graphics.setColor(0, 0, 0, 100)
+  if shadow_debug_mode then love.graphics.setColor(0, 0, 255) end
   for i, s in ipairs(shadow) do
     local vertices = {}
     
@@ -49,7 +55,6 @@ function draw_shadow(shadow, x, y)
     end
 
     if #vertices > 0 then
-      -- print_if_moved('shadow will be drawn')
       love.graphics.polygon('fill', vertices)
     end
   end
@@ -60,7 +65,9 @@ end
 function draw_bordered_tile(tile_index, shadow, border, x, y)
   if tile_index == -1 then return end
 
-  draw_sprite(tile[tile_index], x, y)
+  if not shadow_debug_mode then
+    draw_sprite(tile[tile_index], x, y)
+  end
 
   draw_shadow(shadow, x, y)
 
@@ -266,7 +273,6 @@ function get_shadow(map_x, map_y)
 end
 
 function recalc_zbuffer()
-
   -- Reset the zbuffer, which we call tile_cols. I could rename either
   -- this function or the variable so it's more obvious they refer to the same thing.
   -- tile_cols[col#][row#] = {bkg_tile, fg_tile} or just {bkg_tile}.
@@ -290,7 +296,8 @@ function recalc_zbuffer()
     if last_hdiff ~= nil and hdiff < last_hdiff then
       -- print('in the slope block')
       -- We may need to put some slopes in here.
-      for hd = hdiff + 1, last_hdiff do  -- Not (last_hdiff - 1) because last time base_y was 1 lower.
+      -- This loop is not (last_hdiff - 1) because last time base_y was 1 lower.
+      for hd = hdiff + 1, last_hdiff do
         add_tile_to_zbuffer(base_x, 3 * base_y - hd, 2, top_layer)
       end
     end
@@ -312,8 +319,10 @@ function recalc_zbuffer()
     -- print('borders=' .. stringify(borders))
     -- print('borders[x]=' .. stringify(borders[x]))
     -- print('borders[x][y]=' .. stringify(borders[x][y]))
-    borders[x][y][bkg_fg_index] = this_border
-    shadows[x][y][bkg_fg_index] = this_shadow
+    local b, s = this_border, this_shadow
+    if tile_index == 2 then b, s = {}, {} end
+    borders[x][y][bkg_fg_index] = b
+    shadows[x][y][bkg_fg_index] = s
   end
 
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
@@ -337,6 +346,7 @@ function recalc_zbuffer()
       local hdiff = height - hero_height
       this_border = get_border(map_x, map_y)
       this_shadow = get_shadow(map_x, map_y)
+      -- print('(' .. x .. ', ' .. y .. '): (shadow) ' .. stringify(this_shadow))
       -- print('hdiff=' .. hdiff)
       local screen_y = 3 * y - hdiff
       if y == 0 then

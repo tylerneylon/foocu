@@ -26,7 +26,7 @@ end
 
 -- Globals.
 
-seed = 47
+seed = 41  -- 47
 rand_max = 65535
 max_scale = 6
 

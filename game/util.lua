@@ -41,6 +41,8 @@ function stringify(t)
     return s
   elseif type(t) == 'number' then
     return tostring(t)
+  elseif type(t) == 'boolean' then
+    return tostring(t)
   end
   return 'unknown type'
 end
