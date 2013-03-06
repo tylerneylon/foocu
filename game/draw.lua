@@ -17,10 +17,53 @@ function draw_sprite(sprite, x, y)
 end
 
 -- The input x, y are in screen sprite coordinates.
+function draw_shadow(shadow, x, y)
+  local x_size = 0.2  -- As a fraction of a (map) sprite.
+  local x_start = 1.0 - x_size
+  local y_size = 0.4
+  local y_start = 1.0 - y_size
+
+  love.graphics.setColor(0, 0, 0, 100)
+  for i, s in ipairs(shadow) do
+    local vertices = {}
+    
+    -- Accepts x, y in the range [0, 1] for the local sprite.
+    function add_relative_pt(pt_x, pt_y)
+      table.insert(vertices, (x + pt_x) * tile_w + map_offset_x)
+      table.insert(vertices, (y + 3 * pt_y) * tile_h + map_offset_y)
+    end
+    function add_relative_pts(pts)
+      for i = 1, #pts, 2 do add_relative_pt(pts[i], pts[i + 1]) end
+    end
+
+    if s == 0 then
+      add_relative_pts({x_start, 0, 1, 0, 1, y_start, x_start, y_start})
+    elseif s == 1 then
+      add_relative_pts({x_start, 0, 1, 0, 1, 1, x_start, y_start})
+    elseif s == 2 then
+      add_relative_pts({0, y_start, x_start, y_start, x_start, 1, 0, 1})
+    elseif s == 3 then
+      add_relative_pts({0, y_start, x_start, y_start, 1, 1, 0, 1})
+    elseif s == 4 then
+      add_relative_pts({x_start, y_start, 1, y_start, 1, 1, x_start, 1})
+    end
+
+    if #vertices > 0 then
+      -- print_if_moved('shadow will be drawn')
+      love.graphics.polygon('fill', vertices)
+    end
+  end
+  love.graphics.setColor(255, 255, 255)
+end
+
+-- The input x, y are in screen sprite coordinates.
 function draw_bordered_tile(tile_index, shadow, border, x, y)
   if tile_index == -1 then return end
 
   draw_sprite(tile[tile_index], x, y)
+
+  draw_shadow(shadow, x, y)
+
   -- Draw the border.
   love.graphics.setColor(0, 255, 0)
 
