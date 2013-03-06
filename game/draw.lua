@@ -170,6 +170,52 @@ function get_border(map_x, map_y)
   return border
 end
 
+--[[ Returns a list of shadows to draw, with values indicating these shapes:
+     --   --
+     ||   ||
+     __   \-  |---_   |---\   r (small square in LR corner)
+     0    1   2       3       4
+
+     (0 and 2 don't include 4, so those can be drawn independently)
+
+     In the future, I envision possibly having zbuffers simply point back to
+     map_xy locations, which would simplify the zbuffer-and-friends data
+     structure. If this and get_border calls are taking up time, I could also
+     cache results with the map.
+
+     Also this is built for max-1-height changes which is NOT at all what I
+     want in the long run. TODO Handle shadows more generally, but still not
+     in true 3d.
+  ]]
+function get_shadow(map_x, map_y)
+  local h = map_height(map_x, map_y)
+  local right_is_higher = map_height(map_x + 1, map_y) > h
+  local down_is_higher = map_height(map_x, map_y + 1) > h
+  local dr_is_higher = map_height(map_x + 1, map_y + 1) > h
+  local shadow = {}
+  if right_is_higher then
+    if dr_is_higher then
+      table.insert(shadow, 0)
+    else
+      table.insert(shadow, 1)
+    end
+  end
+  if down_is_higher then
+    if dr_is_higher then
+      table.insert(shadow, 2)
+    else
+      table.insert(shadow, 3)
+    end
+  end
+  if dr_is_higher then
+    table.insert(shadow, 4)
+  end
+  if right_is_higher and down_is_higher then
+    -- This is a special case where dr_is_higher doesn't matter.
+    shadow = {0, 2, 4}
+  return shadow
+end
+
 function recalc_zbuffer()
 
   -- Reset the zbuffer, which we call tile_cols. I could rename either
