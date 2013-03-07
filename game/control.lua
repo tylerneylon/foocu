@@ -78,4 +78,13 @@ function update(dt)
   -- print_if_moved('hero_map = (' .. hero_map_x .. ', ' .. hero_map_y .. ')')
 end
 
+function keypressed(key)
+  if key == "d" then
+    local draw_modes = {'normal', 'debug'}
+    local mode_index = index_of(draw_modes, draw_mode) + 1
+    if mode_index > #draw_modes then mode_index = 1 end
+    draw_mode = draw_modes[mode_index]
+    print("draw_mode=" .. draw_mode)
+  end
+end
 

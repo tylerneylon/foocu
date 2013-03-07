@@ -77,3 +77,11 @@ did_move = false
 function print_if_moved(s)
   if did_move then print(s) end
 end
+
+-- Returns -1 if not found; otherwise the index of the item in table t.
+function index_of(t, item)
+  for index, value in ipairs(t) do
+    if value == item then return index end
+  end
+  return -1
+end

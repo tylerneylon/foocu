@@ -49,3 +49,7 @@ end
 function love.update(dt)
   update(dt)  -- Defined in control.lua.
 end
+
+function love.keypressed(key)
+  keypressed(key)
+end
