@@ -10,6 +10,15 @@
         and do that.
   ]]
 
+-- Public functions.
+
+function draw_map()
+  draw_map_layer('background')
+  draw_hero()
+  draw_map_layer('foreground')
+  draw_border()
+  draw_debug_text_if_in_debug_mode()
+end
 
 -- Globals
 
@@ -158,13 +167,6 @@ pending_xy_delta = nil  -- This will have the form {dx, dy}, pre-multiplied by d
 pending_anim_time_left = 0
 pending_hdiff = 0
 anim_duration = 0.08
-
-function draw_map()
-  draw_map_layer('background')
-  draw_hero()
-  draw_map_layer('foreground')
-  draw_border()
-end
 
 -- Draw the hero and debug outlines.
 function draw_hero()
@@ -406,4 +408,13 @@ function scroll_if_needed()
   
   ul_corner_x = ul_corner_x + dx
   ul_corner_y = ul_corner_y + dy
+end
+
+function draw_debug_text_if_in_debug_mode()
+  local y = 5
+  love.graphics.print(draw_mode .. ' mode', 10, y)
+  if draw_mode == 'debug' then
+    local location_str = string.format('(%.2f, %.2f)', hero_map_x, hero_map_y)
+    love.graphics.print(location_str, 100, y)
+  end
 end
