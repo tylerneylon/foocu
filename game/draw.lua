@@ -14,6 +14,7 @@
 -- Globals
 
 shadow_debug_mode = false
+draw_mode = 'normal'  -- The alternative is 'debug'; others may be added later.
 
 -- For this function, the input sprite is an image.
 -- This takes care of map_offset_{x,y} for sprites.
@@ -160,25 +161,32 @@ anim_duration = 0.08
 
 function draw_map()
   draw_map_layer('background')
+  draw_hero()
+  draw_map_layer('foreground')
+  draw_border()
+end
 
-  -- Draw the hero and debug outlines.
-  local debug_alpha = 90
-  local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
-  local bx, by = math.floor(hero_map_x), math.floor(hero_map_y + 0.3)
-  love.graphics.setColor(0, 0, 255, debug_alpha)  -- Blue.
-  for dx = 0, 1 do for dy = 0, 1 do  -- This syntax is not an accident. I like it, ok?
-    draw_rect_at_map_point(bx + dx, by + dy)
-  end end
-  love.graphics.setColor(255, 255, 255, debug_alpha)
-  draw_rect_at_map_point(hx, hy)
-  love.graphics.setColor(255, 255, 255)
+-- Draw the hero and debug outlines.
+function draw_hero()
+  if draw_mode == 'debug' then
+    local debug_alpha = 90
+    local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
+    local bx, by = math.floor(hero_map_x), math.floor(hero_map_y + 0.3)
+    love.graphics.setColor(0, 0, 255, debug_alpha)  -- Blue.
+    for dx = 0, 1 do for dy = 0, 1 do  -- This syntax is not an accident. I like it, ok?
+      draw_rect_at_map_point(bx + dx, by + dy)
+    end end
+    love.graphics.setColor(255, 255, 255, debug_alpha)
+    draw_rect_at_map_point(hx, hy)
+    love.graphics.setColor(255, 255, 255)
+  end
   -- The - 1 is to account for the double-height of the hero sprite. We want to draw
   -- his feet on the square were we count him as.
   draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, (hero_map_y - ul_corner_y) * 3 - 1 - hero_anim_offset())
+end
 
-  draw_map_layer('foreground')
-
-  -- Draw the border. Eventually I plan for this to have status info.
+-- Draw the border. Eventually I plan for this to have status info.
+function draw_border()
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   local lr_x, lr_y = map_offset_x + map_display_w * tile_w, map_offset_y + map_display_h * tile_h
   local r, g, b = love.graphics.getColor()
