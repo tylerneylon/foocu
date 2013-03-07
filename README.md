@@ -4,7 +4,7 @@ The vision of foocu is to be old-school Zelda-ish game.
 For now it is a sprite of a guy walking around a rather boring map.
 Here's what we've got so far:
 
-![Foocu Screenshot](https://raw.github.com/tylerneylon/foocu/master/game/screenshot.png)
+![Foocu Screenshot](https://raw.github.com/tylerneylon/foocu/master/game/img/screenshot01.png)
 
 This is not a serious project, and is mostly coding for fun.
 It's based on the 2d game engine [Love](https://love2d.org/).
