@@ -3,6 +3,8 @@
      Functions for working with user input, for foocu.
   ]]
 
+local draw = require('draw')
+
 function update(dt)
   --print('ul_corner_y=' .. ul_corner_y)
   -- clock = math.floor((love.timer.getMicroTime() - clock_start) / 0.2)
@@ -63,28 +65,27 @@ function update(dt)
     if pending_anim_time_left <= 0 then pending_hdiff = 0 end
   end
 
-  scroll_if_needed()
-
   if did_move then
     move_clock = move_clock + dt
     hero_sprite = math.floor(move_clock / move_tick) % 2
   end
 
   -- TODO Maybe this should only be done if did_move is true.
-  recalc_zbuffer()
+  draw.compute()
 
   -- print_if_moved('dt=' .. dt)
   -- print_if_moved('ul_corner = (' .. ul_corner_x .. ', ' .. ul_corner_y .. ')')
   -- print_if_moved('hero_map = (' .. hero_map_x .. ', ' .. hero_map_y .. ')')
 end
 
+-- TODO Consolidate draw.mode toggling into draw.lua.
 function keypressed(key)
   if key == "d" then
     local draw_modes = {'normal', 'debug'}
-    local mode_index = index_of(draw_modes, draw_mode) + 1
+    local mode_index = index_of(draw_modes, draw.mode) + 1
     if mode_index > #draw_modes then mode_index = 1 end
-    draw_mode = draw_modes[mode_index]
-    print("draw_mode=" .. draw_mode)
+    draw.mode = draw_modes[mode_index]
+    print("draw.mode=" .. draw.mode)
   end
 end
 

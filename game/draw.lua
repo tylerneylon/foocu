@@ -1,6 +1,19 @@
 --[[ draw.lua
 
-     Drawing functions for foocu.
+     This holds foocu's main drawing function.
+     Use it like this:
+
+       local draw = require('draw')
+
+       -- Later, when we want to draw to the screen:
+       draw()
+
+       -- To update drawing data based on map/hero data:
+       draw.compute()
+
+       -- This holds 'normal' or 'debug':
+       draw.mode
+
   ]]
 
 
@@ -10,36 +23,46 @@
         and do that.
   ]]
 
+draw = {}
+local M = draw
+
 -- Public functions.
 
-function draw_map()
-  draw_map_layer('background')
-  draw_hero()
-  draw_map_layer('foreground')
-  draw_border()
-  draw_debug_text_if_in_debug_mode()
+local function draw()
+  M._draw_map_layer('background')
+  M._draw_hero()
+  M._draw_map_layer('foreground')
+  M._draw_border()
+  M._draw_debug_text_if_in_debug_mode()
+end
+setmetatable(M, {__call = draw})
+
+M.compute = function()
+  M._scroll_if_needed()
+  M._recalc_zbuffer()
 end
 
--- Globals
+-- Shared variables (global to this file)
 
-shadow_debug_mode = false
-draw_mode = 'normal'  -- The alternative is 'debug'; others may be added later.
+M._shadow_debug_mode = false
+-- TODO make this next one global
+M.mode = 'normal'  -- The alternative is 'debug'; others may be added later.
 
 -- For this function, the input sprite is an image.
 -- This takes care of map_offset_{x,y} for sprites.
-function draw_sprite(sprite, x, y)
+function M._draw_sprite(sprite, x, y)
   love.graphics.draw(sprite, x * tile_w + map_offset_x, y * tile_h + map_offset_y)
 end
 
 -- The input x, y are in screen sprite coordinates.
-function draw_shadow(shadow, x, y)
+function M._draw_shadow(shadow, x, y)
   local x_size = 0.2  -- As a fraction of a (map) sprite.
   local x_start = 1.0 - x_size
   local y_size = 0.45
   local y_start = 1.0 - y_size
 
   love.graphics.setColor(0, 0, 0, 100)
-  if shadow_debug_mode then love.graphics.setColor(0, 0, 255) end
+  if M._shadow_debug_mode then love.graphics.setColor(0, 0, 255) end
   for i, s in ipairs(shadow) do
     local vertices = {}
     
@@ -72,14 +95,14 @@ function draw_shadow(shadow, x, y)
 end
 
 -- The input x, y are in screen sprite coordinates.
-function draw_bordered_tile(tile_index, shadow, border, x, y)
+function M._draw_bordered_tile(tile_index, shadow, border, x, y)
   if tile_index == -1 then return end
 
-  if not shadow_debug_mode then
-    draw_sprite(tile[tile_index], x, y)
+  if not M._shadow_debug_mode then
+    M._draw_sprite(tile[tile_index], x, y)
   end
 
-  draw_shadow(shadow, x, y)
+  M._draw_shadow(shadow, x, y)
 
   -- Draw the border.
   love.graphics.setColor(0, 255, 0)
@@ -98,7 +121,7 @@ function draw_bordered_tile(tile_index, shadow, border, x, y)
 end
 
 -- As the name implies, the inputs are in map sprite coordinates.
-function draw_rect_at_map_point(x, y)
+function M._draw_rect_at_map_point(x, y)
   -- print_if_moved('draw_rect_at_map_point(' .. x .. ', ' .. y .. ')')
   local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
   local hero_height = map_height(hx, hy)
@@ -116,7 +139,7 @@ function draw_rect_at_map_point(x, y)
 end
 
 -- Accepts either 'background' or 'foreground' for the layer_name.
-function draw_map_layer(layer_name)
+function M._draw_map_layer(layer_name)
   local is_top_layer = (layer_name == 'foreground')
 
   for y = -2, map_display_h + 2 do
@@ -144,7 +167,7 @@ function draw_map_layer(layer_name)
         local offset_y = (math.floor(ul_corner_y) - ul_corner_y) * 3
 
         if not is_top_layer then
-          draw_bordered_tile(tile_index, shadow, border, x + offset_x, y + offset_y)
+          M._draw_bordered_tile(tile_index, shadow, border, x + offset_x, y + offset_y)
         else
           if layers[1] and layers[2] then
             --[[ The original system was designed to make this a transparent
@@ -152,7 +175,7 @@ function draw_map_layer(layer_name)
                  redesign the transparency system, and for now I'll just draw
                  everything opaque. ]]
             -- love.graphics.setColor(255, 255, 255, 100)
-            draw_bordered_tile(layers[2], shadow_layers[2], border_layers[2],
+            M._draw_bordered_tile(layers[2], shadow_layers[2], border_layers[2],
                                x + offset_x, y + offset_y)
             -- love.graphics.setColor(255, 255, 255, 255)
           end
@@ -169,8 +192,8 @@ pending_hdiff = 0
 anim_duration = 0.08
 
 -- Draw the hero and debug outlines.
-function draw_hero()
-  if draw_mode == 'debug' then
+function M._draw_hero()
+  if mode == 'debug' then
     local debug_alpha = 90
     local hx, hy = math.floor(hero_map_x + 0.5), math.floor(hero_map_y + 0.8)
     local bx, by = math.floor(hero_map_x), math.floor(hero_map_y + 0.3)
@@ -184,11 +207,11 @@ function draw_hero()
   end
   -- The - 1 is to account for the double-height of the hero sprite. We want to draw
   -- his feet on the square were we count him as.
-  draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, (hero_map_y - ul_corner_y) * 3 - 1 - hero_anim_offset())
+  M._draw_sprite(hero[hero_sprite], hero_map_x - ul_corner_x, (hero_map_y - ul_corner_y) * 3 - 1 - M._hero_anim_offset())
 end
 
 -- Draw the border. Eventually I plan for this to have status info.
-function draw_border()
+function M._draw_border()
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   local lr_x, lr_y = map_offset_x + map_display_w * tile_w, map_offset_y + map_display_h * tile_h
   local r, g, b = love.graphics.getColor()
@@ -204,7 +227,7 @@ end
 -- For a climb, this will go from 0 up to N.  (Always non-negative.)
 -- I expect it to be used to draw the hero as something like:
 --   drawn_y = standing_still_y - hero_anim_offset()
-function hero_anim_offset()
+function M._hero_anim_offset()
   local perc_left = pending_anim_time_left / anim_duration
   if pending_hdiff < 0 then
     return pending_hdiff * -1 * perc_left
@@ -224,7 +247,7 @@ end
           ---3---
      This way, we can look at b%2 and b//2 to concisely know what to draw.
   ]]
-function get_border(map_x, map_y)
+function M._get_border(map_x, map_y)
   local h = map_height(map_x, map_y)
   local border = {}
   local dirs = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}}
@@ -252,7 +275,7 @@ end
      want in the long run. TODO Handle shadows more generally, but still not
      in true 3d.
   ]]
-function get_shadow(map_x, map_y)
+function M._get_shadow(map_x, map_y)
   local h = map_height(map_x, map_y)
   local right_is_higher = map_height(map_x + 1, map_y) > h
   local down_is_higher = map_height(map_x, map_y + 1) > h
@@ -282,7 +305,7 @@ function get_shadow(map_x, map_y)
   return shadow
 end
 
-function recalc_zbuffer()
+function M._recalc_zbuffer()
   -- Reset the zbuffer, which we call tile_cols. I could rename either
   -- this function or the variable so it's more obvious they refer to the same thing.
   -- tile_cols[col#][row#] = {bkg_tile, fg_tile} or just {bkg_tile}.
@@ -354,8 +377,8 @@ function recalc_zbuffer()
       local height = map_height(map_x, map_y)
       -- print('height=' .. height)
       local hdiff = height - hero_height
-      this_border = get_border(map_x, map_y)
-      this_shadow = get_shadow(map_x, map_y)
+      this_border = M._get_border(map_x, map_y)
+      this_shadow = M._get_shadow(map_x, map_y)
       -- print('(' .. x .. ', ' .. y .. '): (shadow) ' .. stringify(this_shadow))
       -- print('hdiff=' .. hdiff)
       local screen_y = 3 * y - hdiff
@@ -371,7 +394,7 @@ function recalc_zbuffer()
           -- print('dy=' .. dy)
           tile_index = map(map_x, map_y + dy)
           hdiff = map_height(map_x, map_y + dy) - hero_height
-          this_border = get_border(map_x, map_y + dy)
+          this_border = M._get_border(map_x, map_y + dy)
           add_point_to_zbuffer(x, y + dy, tile_index, hdiff)
           dy = dy + 1
         end
@@ -385,7 +408,7 @@ function recalc_zbuffer()
 end
 
 -- Returns the smallest dx, dy so that (px - dx, py - dy) is inside the rect.
-function delta_from_rect(px, py, rect_x, rect_y, rect_w, rect_h)
+function M._delta_from_rect(px, py, rect_x, rect_y, rect_w, rect_h)
   local dx, dy = 0, 0
   local end_x, end_y = rect_x + rect_w, rect_y + rect_h
 
@@ -397,12 +420,12 @@ function delta_from_rect(px, py, rect_x, rect_y, rect_w, rect_h)
   return dx, dy
 end
 
-function scroll_if_needed()
+function M._scroll_if_needed()
   -- The - 1 in the width and height are to account for the sprite used
   -- up by the hero sprite itself.  We wouldn't need that - 1 if the
   -- hero were just a single point.
-  local dx, dy = delta_from_rect(
-      hero_map_x, hero_map_y - hero_anim_offset() / 3,
+  local dx, dy = M._delta_from_rect(
+      hero_map_x, hero_map_y - M._hero_anim_offset() / 3,
       ul_corner_x + scroll_frame, ul_corner_y + scroll_frame,
       map_display_w - 2 * scroll_frame - 1, map_display_h / 3 - 2 * scroll_frame - 1)
   
@@ -410,11 +433,13 @@ function scroll_if_needed()
   ul_corner_y = ul_corner_y + dy
 end
 
-function draw_debug_text_if_in_debug_mode()
+function M._draw_debug_text_if_in_debug_mode()
   local y = 5
-  love.graphics.print(draw_mode .. ' mode', 10, y)
-  if draw_mode == 'debug' then
+  love.graphics.print(M.mode .. ' mode', 10, y)
+  if M.mode == 'debug' then
     local location_str = string.format('(%.2f, %.2f)', hero_map_x, hero_map_y)
     love.graphics.print(location_str, 100, y)
   end
 end
+
+return M

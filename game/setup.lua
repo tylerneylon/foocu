@@ -38,7 +38,9 @@ function init()
   move_clock = 0  -- A float that counts up in seconds as the hero moves.
   move_tick = 0.07  -- In seconds, how often a moving hero sprite changes.
 
+  --[[ Use this to check startup globals.
   for key, value in pairs(_G) do
     print(key, value)
   end
+  ]]
 end

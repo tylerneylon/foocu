@@ -4,7 +4,7 @@
   ]]
 
 require('control')
-require('draw')
+local draw = require('draw')
 require('map')
 require('setup')
 require('util')
@@ -43,7 +43,7 @@ function love.load()
 end
 
 function love.draw()
-  draw_map()  -- Defined in draw.lua.
+  draw()  -- Defined in draw.lua.
 end
 
 function love.update(dt)
