@@ -18,6 +18,14 @@ or into caves, for example.
 The rendering and motion should make it visually clear which things are higher
 than others. I won't worry about transparency yet.
 
+Steps:
+
+* Standardize include style
+* Eliminate all globals
+* Organize files better
+* Rewrite the drawing system; keep in mind new shadows, no transparency support
+
+
 ## Improve random map generation
 
 Specifically, break things down into a small number of biomes, add new sprites
