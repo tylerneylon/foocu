@@ -31,3 +31,48 @@ It looks like simply defining the say_hi function before the definition of
 M.f seems to fix the problem I saw in the first case. However, I suspect
 this solution would break if we used dofile instead of require. I'm interested
 in a pattern that will also work for dofile-style file includes.
+
+## 3. Number 2 breaks with dofile
+
+This is basically the same as pattern 2, except that calls to require have
+been replaced by dofile.
+
+The output produced is:
+
+    singleton is running
+    hi! x=5
+    singleton is running
+    hi! x=3
+
+Since we'd like there to be a single global instance of the module's data,
+we really want the last line to give x=5.
+
+## 4. A more robust pattern
+
+This pattern uses a single overall global to ensure each singleton is always a
+singleton. It avoids executing the module more than once. Here is a general
+template for the pattern:
+
+    --[[ Singleton header pattern ]]
+
+    local selfname = debug.getinfo(1).source
+    if not global_singleton then global_singleton = {} end
+    if global_singleton[selfname] then return global_singleton[selfname] end
+    local M = {}
+    global_singleton[selfname] = M
+
+    --[[ Begin module definition ]]
+
+    -- << Define local (=private) variables and functions first. >>
+
+    local function say_hi() print('hi! x=' .. M.x) end
+
+    -- << Next, define public variables and funcions. >>
+
+    M.x = 3
+
+    M.f = function() say_hi() end
+
+    --[[ End module definition ]]
+
+    return M
