@@ -43,7 +43,7 @@ function love.load()
 end
 
 function love.draw()
-  draw()  -- Defined in draw.lua.
+  draw.draw()  -- Defined in draw.lua.
 end
 
 function love.update(dt)
